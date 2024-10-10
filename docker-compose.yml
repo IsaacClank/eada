@@ -1,0 +1,17 @@
+services:
+  api:
+    build: ./backend/api
+    ports:
+      - 3000:3000
+
+  db:
+    build: ./backend/db
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_DB=eada
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=admin
+    volumes:
+      - ./backend/db/data:/var/lib/postgresql/data
+
