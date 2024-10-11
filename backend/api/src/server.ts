@@ -1,13 +1,32 @@
-import Fastify from "fastify";
+import * as fastifyEnv from "@fastify/env";
+import * as fastify from "fastify";
 
-const fastify = Fastify({
-  logger: {
-    enabled: true,
-    level: "info",
-  },
-});
+async function main() {
+  const fastifyInstance = fastify.fastify({
+    logger: {
+      enabled: true,
+      level: "info",
+    },
+  });
 
-fastify.get("/ping", () => "pong");
+  await fastifyInstance.register(fastifyEnv.fastifyEnv, {
+    dotenv: true,
+    schema: {
+      properties: {
+        ENVIRONMENT: { type: "string", default: "development" },
+        HOST: { type: "string", default: "::" },
+        PORT: { type: "number", default: 3000 },
+      },
+    },
+  } as fastifyEnv.FastifyEnvOptions);
 
-console.clear();
-fastify.listen({ host: "::", port: 3000 });
+  fastifyInstance.get("/ping", () => "pong");
+
+  console.clear();
+  await fastifyInstance.listen({
+    host: fastifyInstance.config.HOST,
+    port: fastifyInstance.config.PORT,
+  });
+}
+
+main();
