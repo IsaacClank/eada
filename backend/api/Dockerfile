@@ -1,18 +1,11 @@
-FROM debian:bookworm
+FROM node:iron-bookworm
 
-ENV CONTAINER_HOST=
-ENV CONTAINER_PORT=
-
-RUN apt update
-RUN apt install -y nodejs npm
-
-WORKDIR /eada-api
+WORKDIR /app
 
 COPY package.json package-lock.json ./
 RUN npm i
 
-COPY ./src ./src
-COPY tsconfig.json ./
+COPY . .
 
 ENTRYPOINT ["npm"]
 CMD [ "run", "start:dev" ]
