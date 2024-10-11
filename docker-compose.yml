@@ -15,3 +15,8 @@ services:
     volumes:
       - ./backend/db/data:/var/lib/postgresql/data
 
+  spa:
+    build: ./frontend/spa
+    ports:
+      - 5173:5173
+
