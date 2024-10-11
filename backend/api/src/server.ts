@@ -1,4 +1,4 @@
-import { fastifyEnv, FastifyEnvOptions } from "@fastify/env";
+import { fastifyEnv } from "@fastify/env";
 
 import * as fastify from "fastify";
 
@@ -13,6 +13,7 @@ async function main() {
   await app.register(fastifyEnv, {
     dotenv: true,
     schema: {
+      type: "object",
       properties: {
         ENVIRONMENT: { type: "string", default: "development" },
         HOST: { type: "string", default: "::" },
@@ -20,7 +21,7 @@ async function main() {
         DATABSE_URL: { type: "string" },
       },
     },
-  } as FastifyEnvOptions);
+  });
 
   app.get("/health", async () => {
     return;

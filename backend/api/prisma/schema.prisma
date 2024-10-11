@@ -14,5 +14,100 @@ datasource db {
 }
 
 model Budget {
+  id             String @id @default(uuid())
+  name           String @db.VarChar(30)
+  normalizedName String @map("normalized_name") @db.VarChar(60)
+
+  income Decimal @db.Money
+
+  budgetCategories BudgetCategory[]
+  userId           String           @map("user_id")
+  user             User             @relation(fields: [userId], references: [id])
+
+  @@unique([userId, normalizedName])
+  @@map("budget")
+}
+
+model BudgetCategory {
+  id             String @id @default(uuid())
+  name           String @db.VarChar(30)
+  normalizedName String @map("normalized Name") @db.VarChar(60)
+
+  percentageOfIncome Decimal @map("percentange_of_income") @db.Decimal(4, 2)
+
+  budgetId            String?               @map("budget_id")
+  budget              Budget?               @relation(fields: [budgetId], references: [id])
+  budgetCategoryToTag BudgetCategoryToTag[]
+
+  @@unique([budgetId, normalizedName])
+  @@map("budget_category")
+}
+
+model BudgetCategoryToTag {
+  budgetCategoryId String         @map("budget_category_id")
+  budgetCategory   BudgetCategory @relation(fields: [budgetCategoryId], references: [id])
+  tagId            String         @map("tag_id")
+  tag              Tag            @relation(fields: [tagId], references: [id])
+
+  @@id([budgetCategoryId, tagId])
+  @@map("_budget_category_to_tag")
+}
+
+model Tag {
+  id             String @id @default(uuid())
+  name           String @db.VarChar(30)
+  normalizedName String @map("normalized_name") @db.VarChar(60)
+
+  info Json?
+
+  budgetCategoryToTag BudgetCategoryToTag[]
+  tagToTransaction    TagToTransaction[]
+  userId              String                @map("user_id")
+  user                User                  @relation(fields: [userId], references: [id])
+
+  @@map("tag")
+}
+
+model TagToTransaction {
+  tagId         String      @map("tag_id")
+  tag           Tag         @relation(fields: [tagId], references: [id])
+  transactionId String      @map("transaction_id")
+  transaction   Transaction @relation(fields: [transactionId], references: [id])
+
+  @@id([tagId, transactionId])
+  @@map("_tag_to_transaction")
+}
+
+model Transaction {
+  id        String   @id @default(uuid())
+  createdAt DateTime @map("created_at") @db.Timestamptz()
+
+  amount Decimal         @db.Money
+  notes  String
+  type   TransactionType
+
+  tagToTransaction TagToTransaction[]
+  userId           String             @map("user_id")
+  user             User               @relation(fields: [userId], references: [id])
+
+  @@map("transaction")
+}
+
+enum TransactionType {
+  Expense
+  Income
+}
+
+model User {
   id String @id @default(uuid())
+
+  email             String @map("email") @db.VarChar(50)
+  normalizedEmail   String @unique @map("normalized_email") @db.VarChar(100)
+  encryptedPassword String @map("encrypted_password")
+
+  budget      Budget[]
+  tag         Tag[]
+  transaction Transaction[]
+
+  @@map("user")
 }
