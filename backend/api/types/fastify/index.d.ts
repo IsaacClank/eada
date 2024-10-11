@@ -6,6 +6,7 @@ declare module "fastify" {
       ENVIRONMENT: string;
       HOST: string;
       PORT: number;
+      DATABASE_URL: string;
     };
   }
 }

@@ -8,12 +8,14 @@
   },
   "dependencies": {
     "@fastify/env": "^5.0.1",
+    "@types/pg": "^8.11.10",
     "fastify": "^5.0.0"
   },
   "devDependencies": {
     "@types/node": "^22.7.5",
     "node-dev": "^8.0.0",
     "prettier": "^3.3.3",
+    "prisma": "^5.20.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.6.3"
   }
