@@ -1,12 +1,16 @@
+import { PrismaClient } from "@prisma/client";
 import "fastify";
 
 declare module "fastify" {
   interface FastifyInstance {
-    config: {
-      ENVIRONMENT: string;
-      HOST: string;
-      PORT: number;
-      DATABASE_URL: string;
-    };
+    db: PrismaClient;
+    config: FastifyAppConfig;
+  }
+
+  interface FastifyAppConfig {
+    ENVIRONMENT: string;
+    HOST: string;
+    PORT: number;
+    DATABASE_URL: string;
   }
 }
