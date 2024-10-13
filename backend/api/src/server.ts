@@ -15,6 +15,8 @@ async function main() {
     return;
   });
 
+  app.register(require("./routes/account"), { prefix: "account" });
+
   console.clear();
   app.listen({
     host: app.config.HOST,
