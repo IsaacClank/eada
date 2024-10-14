@@ -14,4 +14,8 @@ declare module "fastify" {
     DATABASE_URL: string;
     JWT_SECRET: string;
   }
+
+  interface FastifyRequest {
+    isProtected?: boolean;
+  }
 }
