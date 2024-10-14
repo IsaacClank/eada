@@ -10,6 +10,7 @@ export default fp(async (fastify) => {
         HOST: { type: "string", default: "::" },
         PORT: { type: "number", default: 3000 },
         DATABSE_URL: { type: "string" },
+        JWT_SECRET: { type: "string" },
       },
     },
   });
