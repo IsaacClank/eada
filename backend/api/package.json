@@ -5,7 +5,7 @@
   "version": "0.1.0",
   "scripts": {
     "db:migrate": "prisma db push",
-    "start:dev": "node-dev src/server.ts"
+    "start:dev": "prisma db push && node-dev src/server.ts"
   },
   "dependencies": {
     "@fastify/env": "^5.0.1",
