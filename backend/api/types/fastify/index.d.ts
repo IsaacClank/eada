@@ -16,6 +16,7 @@ declare module "fastify" {
     HOST: string;
     PORT: number;
     DATABASE_URL: string;
+    JWT_DURATION: number;
     JWT_ISSUER: string;
     JWT_SECRET: string;
   }
