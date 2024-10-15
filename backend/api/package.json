@@ -4,6 +4,7 @@
   "license": "GPL-3.0",
   "version": "0.1.0",
   "scripts": {
+    "db:migrate": "prisma db push",
     "start:dev": "node-dev src/server.ts"
   },
   "dependencies": {
