@@ -8,12 +8,9 @@ async function main() {
     },
   });
 
-  await app.register(require("@fastify/sensible"));
-  await app.register(require("./config"));
-  await app.register(require("./db"));
-  await app.register(require("./auth"));
+  await app.register(require("./fastify"));
 
-  app.get("/health", async () => {
+  app.get("/health", { onRequest: app.authorize() }, async () => {
     return;
   });
 
