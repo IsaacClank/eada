@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "@fastify/env": "^5.0.1",
+    "@fastify/sensible": "^6.0.1",
     "@fastify/type-provider-typebox": "^5.0.0",
     "@prisma/client": "^5.20.0",
     "@types/pg": "^8.11.10",
