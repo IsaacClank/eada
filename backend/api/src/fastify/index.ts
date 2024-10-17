@@ -6,6 +6,11 @@ export default fp(async (fastify) => {
   });
   fastify.decorate("httpErrorSchema", { $id: "HttpError" });
 
+  await fastify.register(require("@fastify/cors"), {
+    origin: true,
+    allowedHeaders: ["Content-Type", "Authorization"],
+  });
+
   await fastify.register(require("./config"));
   await fastify.register(require("./jwt"));
   await fastify.register(require("./db"));
