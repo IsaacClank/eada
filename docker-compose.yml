@@ -1,13 +1,8 @@
 services:
-  api:
-    build: ./backend/api
-    ports:
-      - 3000:3000
-
   db:
     build: ./backend/db
     ports:
-      - 5432:5432
+      - 2000:5432
     environment:
       - POSTGRES_DB=eada
       - POSTGRES_USER=admin
@@ -15,8 +10,22 @@ services:
     volumes:
       - ./backend/db/data:/var/lib/postgresql/data
 
+  db_client:
+    build: ./backend/db/pgadmin
+    depends_on:
+      - db
+    ports:
+      - 2001:80
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@mail.com
+      - PGADMIN_DEFAULT_PASSWORD=admin
+
+  api:
+    build: ./backend/api
+    ports:
+      - 3000:3000
+
   spa:
     build: ./frontend/spa
     ports:
-      - 5173:5173
-
+      - 3010:5173

@@ -1,0 +1,12 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "eada-db",
+      "Group": "Servers",
+      "Host": "db",
+      "Port": 5432,
+      "MaintenanceDB": "eada",
+      "Username": "admin"
+    }
+  }
+}
