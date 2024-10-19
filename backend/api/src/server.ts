@@ -15,6 +15,7 @@ async function main() {
   });
 
   app.register(require("./routes/account"), { prefix: "account" });
+  app.register(require("./routes/budget"), { prefix: "budget" });
 
   console.clear();
   app.listen({
