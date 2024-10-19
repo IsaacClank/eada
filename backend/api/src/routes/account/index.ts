@@ -71,8 +71,8 @@ const routes: FastifyPluginAsyncTypebox = async function (app) {
             authenticated: true,
           },
           {
-            expiresIn: app.config.JWT_DURATION,
-            iss: app.config.JWT_ISSUER,
+            ...app.jwt.options.sign,
+            sub: user.id,
           },
         ),
       });
