@@ -25,8 +25,6 @@ export function AuthContextProvider({ children }: PropsWithChildren) {
     authenticated: localStorage.getItem("accessToken") != null,
   };
 
-  console.log(initialAuthState);
-
   const [state, statePatcher] = useReducer(authStatePatcher, initialAuthState);
 
   return (
