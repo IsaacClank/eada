@@ -1,12 +1,13 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
 
 import "./index.css";
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import RegistrationPage from "./routes/register";
 import LoginPage from "./routes/login";
 import App from "./app";
-import HomePage from "./routes/home";
+import BudgetPage from "./routes/budget";
+import { CreateBudget } from "./routes/budget.create";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -18,7 +19,13 @@ createRoot(document.getElementById("root")!).render(
           children: [
             {
               path: "/",
-              element: <HomePage />,
+              element: <BudgetPage />,
+              children: [
+                {
+                  path: "/create",
+                  element: <CreateBudget />,
+                },
+              ],
             },
             {
               path: "/register",

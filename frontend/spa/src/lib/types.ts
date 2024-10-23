@@ -1,3 +1,7 @@
 export enum LocalStorageKey {
-  AccessToken = "accessToken"
+  AccessToken = "accessToken",
+}
+
+export interface BaseProps {
+  className?: string;
 }
