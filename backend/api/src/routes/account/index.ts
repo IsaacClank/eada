@@ -68,7 +68,6 @@ const routes: FastifyPluginAsyncTypebox = async function (app) {
           {
             email: user.email,
             normalizedEmail: user.normalizedEmail,
-            authenticated: true,
           },
           {
             ...app.jwt.options.sign,
@@ -78,6 +77,10 @@ const routes: FastifyPluginAsyncTypebox = async function (app) {
       });
     },
   );
+
+  app.get("/session", { onRequest: [app.authorize()] }, (req, res) => {
+    res.send(req.user);
+  });
 };
 
 export default routes;
