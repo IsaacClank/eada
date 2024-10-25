@@ -7,13 +7,18 @@ export interface AuthState {
 }
 const initialAuthState: AuthState = { authenticated: null, token: null };
 
+interface AuthStatePatcherAction {
+  state: "authenticated" | "unauthenticated";
+  token?: string | null;
+}
+
 export function AuthContextProvider({ children }: PropsWithChildren) {
   const authStatePatcher = (state: AuthState, action: AuthStatePatcherAction) => {
     switch (action.state) {
       case "authenticated":
-        return { ...state, authenticated: true };
+        return { ...state, authenticated: true, token: action.token } as AuthState;
       case "unauthenticated":
-        return { ...state, authenticated: false };
+        return { ...state, authenticated: false, token: null } as AuthState;
       default:
         return state;
     }
@@ -32,7 +37,7 @@ export function AuthContextProvider({ children }: PropsWithChildren) {
       headers: [["Authorization", `Bearer ${existingToken}`]],
     }).then((res) => {
       if (res.ok) {
-        patchAuthState({ state: "authenticated" });
+        patchAuthState({ state: "authenticated", token: existingToken });
       } else {
         localStorage.removeItem(LocalStorageKey.AccessToken);
         patchAuthState({ state: "unauthenticated" });
@@ -53,6 +58,3 @@ export const AuthStateContext = createContext<AuthState>(initialAuthState);
 
 export const AuthStatePatcherContext = createContext<AuthStatePatcher>((_) => {});
 export type AuthStatePatcher = React.Dispatch<AuthStatePatcherAction>;
-export interface AuthStatePatcherAction {
-  state: "authenticated" | "unauthenticated";
-}

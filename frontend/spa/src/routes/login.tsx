@@ -36,7 +36,7 @@ export default function LoginPage() {
       .then((res) => res.json())
       .then((tokens) => {
         localStorage.setItem("accessToken", tokens.accessToken);
-        authStatePatcher({ state: "authenticated" });
+        authStatePatcher({ state: "authenticated", token: tokens.accessToken });
         navigate("/", { replace: true });
       });
   };
