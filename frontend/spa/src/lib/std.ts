@@ -5,3 +5,9 @@ export enum LocalStorageKey {
 export interface BaseProps {
   className?: string;
 }
+
+export type AsyncAction = () => Promise<void>;
+
+export interface UnknownObj {
+  [key: string]: unknown;
+}

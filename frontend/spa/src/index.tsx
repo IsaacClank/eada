@@ -2,12 +2,10 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 
-import "./index.css";
-import RegistrationPage from "./routes/register";
-import LoginPage from "./routes/login";
 import App from "./app";
-import BudgetPage from "./routes/budget";
-import { CreateBudget } from "./routes/budget.create";
+import "./index.css";
+import { AuthAction, AuthPage } from "./pages/auth";
+import { BudgetOverview } from "./pages/budget/budget-overview";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -18,22 +16,17 @@ createRoot(document.getElementById("root")!).render(
           element: <App />,
           children: [
             {
-              path: "/",
-              element: <BudgetPage />,
-              children: [
-                {
-                  path: "/create",
-                  element: <CreateBudget />,
-                },
-              ],
+              path: "/login",
+              element: <AuthPage authAction={AuthAction.Login} />,
             },
             {
               path: "/register",
-              element: <RegistrationPage />,
+              element: <AuthPage authAction={AuthAction.Register} />,
             },
             {
-              path: "/login",
-              element: <LoginPage />,
+              path: "/",
+              element: <BudgetOverview />,
+              children: [],
             },
           ],
         },

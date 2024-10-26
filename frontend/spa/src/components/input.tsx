@@ -7,7 +7,7 @@ interface InputComponentProps {
   required?: boolean;
 }
 
-export default function Input({ className, name, type, required }: InputComponentProps) {
+export function Input({ className, name, type, required }: InputComponentProps) {
   const defaultBackground = "bg-slate-200";
   const defaultWidth = "w-full";
   const defaultClassName = `${defaultBackground} ${defaultWidth}`;
