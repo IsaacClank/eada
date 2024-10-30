@@ -1,5 +1,6 @@
 import { PropsWithChildren, useEffect, useReducer } from "react";
 
+import { useNavigate } from "react-router-dom";
 import { error, ErrorCodes } from "../../lib/error";
 import { LocalStorageKey } from "../../lib/std";
 import {
@@ -10,7 +11,12 @@ import {
 } from "./state";
 
 export function AuthContextProvider({ children }: PropsWithChildren) {
+  const navigate = useNavigate();
   const [authState, reduceAuthState] = useReducer(authStateReducer, {});
+
+  useEffect(() => {
+    authState.authenticated === false && navigate("/login");
+  }, [authState.authenticated]);
 
   useEffect(() => {
     const storedAccessToken = localStorage.getItem(LocalStorageKey.AccessToken);
@@ -23,9 +29,11 @@ export function AuthContextProvider({ children }: PropsWithChildren) {
     fetch("http://localhost:3000/account/session", {
       method: "GET",
       headers: [["Authorization", `Bearer ${storedAccessToken}`]],
-    }).then(res => {
+    }).then(async res => {
       if (res.ok) {
-        reduceAuthState({ state: "authenticated", token: storedAccessToken });
+        const body = await res.json();
+        console.log(body);
+        reduceAuthState({ state: "authenticated", token: storedAccessToken, user: body });
       } else {
         localStorage.removeItem(LocalStorageKey.AccessToken); // Remove the stale token
         reduceAuthState({ state: "unauthenticated" });
@@ -48,9 +56,14 @@ const authStateReducer = (state: AuthState, input: AuthStateReducerInput): AuthS
       if (!input.token) {
         error(ErrorCodes.UnexpectedError, "Access token not found");
       }
-      return { ...state, authenticated: true, token: input.token };
+
+      if (!input.user) {
+        error(ErrorCodes.UnexpectedError, "User data not found");
+      }
+
+      return { ...state, authenticated: true, token: input.token, user: input.user };
     case "unauthenticated":
-      return { ...state, authenticated: false, token: null };
+      return { ...state, authenticated: false, token: null, user: null };
     default:
       return state;
   }

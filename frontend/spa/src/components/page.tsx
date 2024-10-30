@@ -6,7 +6,7 @@ interface PageContainerProps extends PropsWithChildren {
 
 export function PageContainer({ className, children }: PageContainerProps) {
   const defaultClassName =
-    "h-full px-8 py-40 flex flex-col flex-wrap justify-center lg:justify-start items-center";
+    "h-full px-8 lg:py-40 flex flex-col flex-wrap justify-center lg:justify-start items-center";
 
   className = className?.length == 0 ? defaultClassName : `${defaultClassName} ${className}`;
 
