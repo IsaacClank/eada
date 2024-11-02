@@ -17,8 +17,13 @@ async function main() {
     return;
   });
 
-  app.register(require("./routes/account"), { prefix: "account" });
-  app.register(require("./routes/budget"), { prefix: "budget" });
+  app.register(require("./routes/account/GET"), { prefix: "account" });
+  app.register(require("./routes/account/PUT"), { prefix: "account" });
+  app.register(require("./routes/account/POST"), { prefix: "account" });
+
+  app.register(require("./routes/budget/GET"), { prefix: "budget" });
+  app.register(require("./routes/budget/PUT"), { prefix: "budget" });
+  app.register(require("./routes/budget/expense/total/GET"), { prefix: "budget/expense/total" });
 
   console.clear();
   app.listen({
