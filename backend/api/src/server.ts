@@ -1,6 +1,6 @@
 import * as fastify from "fastify";
 
-async function main() {
+async function start() {
   const app = fastify.fastify({
     logger: {
       enabled: true,
@@ -11,19 +11,16 @@ async function main() {
     },
   });
 
-  await app.register(require("./fastify"));
-
-  app.get("/health", { onRequest: app.authorize() }, async () => {
-    return;
+  await app.register(require("./config"));
+  await app.register(require("@fastify/sensible"));
+  await app.register(require("@fastify/cors"), {
+    origin: true,
+    allowedHeaders: ["Content-Type", "Authorization"],
   });
-
-  app.register(require("./routes/account/GET"), { prefix: "account" });
-  app.register(require("./routes/account/PUT"), { prefix: "account" });
-  app.register(require("./routes/account/POST"), { prefix: "account" });
-
-  app.register(require("./routes/budget/GET"), { prefix: "budget" });
-  app.register(require("./routes/budget/PUT"), { prefix: "budget" });
-  app.register(require("./routes/budget/expense/total/GET"), { prefix: "budget/expense/total" });
+  await app.register(require("./auth"));
+  await app.register(require("./db"));
+  await app.register(require("./dayjs"));
+  await app.register(require("./routes"));
 
   console.clear();
   app.listen({
@@ -32,4 +29,4 @@ async function main() {
   });
 }
 
-main();
+start();

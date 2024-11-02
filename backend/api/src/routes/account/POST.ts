@@ -12,7 +12,6 @@ const routes: FastifyPluginAsyncTypebox = async function (app) {
           200: Type.Object({
             accessToken: Type.String(),
           }),
-          400: app.httpErrorSchema,
         },
       },
     },
