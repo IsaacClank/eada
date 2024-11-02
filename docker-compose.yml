@@ -22,6 +22,8 @@ services:
 
   api:
     build: ./backend/api
+    volumes:
+      - ./backend/api/src:/app/src
     ports:
       - 3000:3000
 
