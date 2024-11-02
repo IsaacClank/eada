@@ -1,6 +1,7 @@
 import "@fastify/jwt";
 import "@fastify/sensible";
 import * as prisma from "@prisma/client";
+import dayjs from "dayjs";
 import "dayjs/plugin/utc";
 import "fastify";
 
