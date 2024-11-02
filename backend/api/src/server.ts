@@ -5,6 +5,9 @@ async function main() {
     logger: {
       enabled: true,
       level: "info",
+      transport: {
+        target: "pino-pretty",
+      },
     },
   });
 

@@ -26,6 +26,7 @@
     "@types/jsonwebtoken": "^9.0.7",
     "@types/node": "^22.7.5",
     "node-dev": "^8.0.0",
+    "pino-pretty": "^11.3.0",
     "prettier": "^3.3.3",
     "prettier-plugin-organize-imports": "^4.1.0",
     "prisma": "^5.20.0",
