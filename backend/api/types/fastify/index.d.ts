@@ -1,6 +1,7 @@
-import * as prisma from "@prisma/client";
 import "@fastify/jwt";
 import "@fastify/sensible";
+import * as prisma from "@prisma/client";
+import "dayjs/plugin/utc";
 import "fastify";
 
 declare module "fastify" {
@@ -9,6 +10,7 @@ declare module "fastify" {
     config: FastifyAppConfig;
     httpErrorSchema: { $id: "HttpError" };
     authorize: () => (req: FastifyRequest) => Promise;
+    dayjs: typeof dayjs;
   }
 
   interface FastifyAppConfig {
