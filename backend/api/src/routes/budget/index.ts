@@ -1,7 +1,4 @@
-import {
-  FastifyPluginAsyncTypebox,
-  Type,
-} from "@fastify/type-provider-typebox";
+import { FastifyPluginAsyncTypebox, Type } from "@fastify/type-provider-typebox";
 
 const routes: FastifyPluginAsyncTypebox = async function (app) {
   const { db } = app;
@@ -90,6 +87,8 @@ const routes: FastifyPluginAsyncTypebox = async function (app) {
       });
     },
   );
+
+  app.register(require("./expense/total.route"), { prefix: "expense/total" });
 };
 
 export default routes;
