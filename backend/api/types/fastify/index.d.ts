@@ -3,6 +3,7 @@ import "@fastify/sensible";
 import * as prisma from "@prisma/client";
 import dayjs from "dayjs";
 import "dayjs/plugin/utc";
+import { BudgetRepository } from "eada/repository/budget";
 import "fastify";
 
 declare module "fastify" {
@@ -12,6 +13,9 @@ declare module "fastify" {
     httpErrorSchema: { $id: "HttpError" };
     authorize: () => (req: FastifyRequest) => Promise;
     dayjs: typeof dayjs;
+    repository: {
+      budget: BudgetRepository;
+    };
   }
 
   interface FastifyAppConfig {

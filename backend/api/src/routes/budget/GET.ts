@@ -1,4 +1,5 @@
 import { FastifyPluginAsyncTypebox, Type } from "@fastify/type-provider-typebox";
+import { JsonResponse } from "eada/schema";
 
 const route: FastifyPluginAsyncTypebox = async function (app) {
   app.get(
@@ -7,11 +8,15 @@ const route: FastifyPluginAsyncTypebox = async function (app) {
       onRequest: [app.authorize()],
       schema: {
         response: {
-          200: Type.Object({
-            name: Type.String(),
-            normalizedName: Type.String(),
-            income: Type.Number(),
-          }),
+          200: JsonResponse(
+            Type.Object({
+              name: Type.String(),
+              normalizedName: Type.String(),
+              income: Type.Number(),
+              totalRemainingInMonth: Type.Number(),
+              totalExpenseInMonth: Type.Number(),
+            }),
+          ),
         },
       },
     },
@@ -27,9 +32,16 @@ const route: FastifyPluginAsyncTypebox = async function (app) {
       }
 
       res.send({
-        name: budget.name,
-        normalizedName: budget.normalizedName,
-        income: budget.income.toNumber(),
+        data: {
+          type: "Budget",
+          attributes: {
+            name: budget.name,
+            normalizedName: budget.normalizedName,
+            income: budget.income.toNumber(),
+            totalExpenseInMonth: await app.repository.budget.totalExpenseInMonth(userId),
+            totalRemainingInMonth: await app.repository.budget.totalRemainingBudgetInMonth(userId),
+          },
+        },
       });
     },
   );
