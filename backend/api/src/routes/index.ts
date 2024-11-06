@@ -11,4 +11,5 @@ export default fp(async app => {
 
   app.register(require("./budget/GET"), { prefix: "budget" });
   app.register(require("./budget/PUT"), { prefix: "budget" });
+  app.register(require("./budget/:id/category/PUT"));
 });

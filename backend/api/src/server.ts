@@ -18,9 +18,8 @@ async function start() {
     allowedHeaders: ["Content-Type", "Authorization"],
   });
   await app.register(require("./auth"));
-  await app.register(require("./db"));
   await app.register(require("./dayjs"));
-  await app.register(require("./repository"));
+  await app.register(require("./db"));
   await app.register(require("./routes"));
 
   console.clear();
