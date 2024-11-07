@@ -11,12 +11,7 @@ const route: FastifyPluginAsyncTypebox = async function (app) {
           income: Type.Number(),
         }),
         response: {
-          200: Type.Object({
-            id: Type.String(),
-            name: Type.String(),
-            normalizedName: Type.String(),
-            income: Type.Number(),
-          }),
+          200: Type.Never(),
         },
       },
     },
@@ -24,7 +19,7 @@ const route: FastifyPluginAsyncTypebox = async function (app) {
       const { name, income } = req.body;
       const { sub: userId } = req.user;
 
-      const upsertedBudget = await app.db.budget.upsert({
+      await app.db.budget.upsert({
         where: {
           userId_normalizedName: {
             userId,
@@ -44,12 +39,7 @@ const route: FastifyPluginAsyncTypebox = async function (app) {
         },
       });
 
-      res.send({
-        id: upsertedBudget.id,
-        name: upsertedBudget.name,
-        normalizedName: upsertedBudget.normalizedName,
-        income: upsertedBudget.income.toNumber(),
-      });
+      res.send();
     },
   );
 };

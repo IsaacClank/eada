@@ -23,6 +23,7 @@ function budgetExtension(app: FastifyInstance, prisma: PrismaClient) {
   return {
     async totalExpenseInMonth(userId: string): Promise<number> {
       const startOfMonth = app.dayjs().startOf("month");
+      app.log.info(`Retrieving total expense in ${startOfMonth.format("MMM, YYYY")}`);
       const transactionInMonthAggregation = await prisma.transaction.aggregate({
         _sum: {
           amount: true,

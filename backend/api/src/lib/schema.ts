@@ -14,6 +14,8 @@ const JsonEntityData = <T extends TSchema>(schema: T) =>
   });
 
 const JsonEntityRelationship = Type.Object({
-  type: Type.String(),
-  id: Type.String(),
+  data: Type.Object({
+    type: Type.String(),
+    id: Type.String(),
+  }),
 });
