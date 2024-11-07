@@ -35,22 +35,13 @@ model BudgetCategory {
 
   percentageOfIncome Decimal @map("percentange_of_income") @db.Decimal(4, 2)
 
-  budgetId            String?               @map("budget_id")
-  budget              Budget?               @relation(fields: [budgetId], references: [id])
-  budgetCategoryToTag BudgetCategoryToTag[]
+  budgetId String? @map("budget_id")
+  budget   Budget? @relation(fields: [budgetId], references: [id])
+  tagId    String  @unique
+  tag      Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
   @@unique([budgetId, normalizedName])
   @@map("budget_category")
-}
-
-model BudgetCategoryToTag {
-  budgetCategoryId String         @map("budget_category_id")
-  budgetCategory   BudgetCategory @relation(fields: [budgetCategoryId], references: [id])
-  tagId            String         @map("tag_id")
-  tag              Tag            @relation(fields: [tagId], references: [id])
-
-  @@id([budgetCategoryId, tagId])
-  @@map("_budget_category_to_tag")
 }
 
 model Tag {
@@ -60,11 +51,12 @@ model Tag {
 
   info Json?
 
-  budgetCategoryToTag BudgetCategoryToTag[]
-  tagToTransaction    TagToTransaction[]
-  userId              String                @map("user_id")
-  user                User                  @relation(fields: [userId], references: [id])
+  tagToTransaction TagToTransaction[]
+  userId           String             @map("user_id")
+  user             User               @relation(fields: [userId], references: [id])
+  budgetCategory   BudgetCategory?
 
+  @@unique([userId, normalizedName])
   @@map("tag")
 }
 

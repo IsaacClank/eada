@@ -19,16 +19,9 @@ CREATE TABLE "budget_category" (
     "normalized Name" VARCHAR(60) NOT NULL,
     "percentange_of_income" DECIMAL(4,2) NOT NULL,
     "budget_id" TEXT,
+    "tagId" TEXT NOT NULL,
 
     CONSTRAINT "budget_category_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "_budget_category_to_tag" (
-    "budget_category_id" TEXT NOT NULL,
-    "tag_id" TEXT NOT NULL,
-
-    CONSTRAINT "_budget_category_to_tag_pkey" PRIMARY KEY ("budget_category_id","tag_id")
 );
 
 -- CreateTable
@@ -76,7 +69,13 @@ CREATE TABLE "user" (
 CREATE UNIQUE INDEX "budget_user_id_normalized_name_key" ON "budget"("user_id", "normalized_name");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "budget_category_tagId_key" ON "budget_category"("tagId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "budget_category_budget_id_normalized Name_key" ON "budget_category"("budget_id", "normalized Name");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "tag_user_id_normalized_name_key" ON "tag"("user_id", "normalized_name");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "user_normalized_email_key" ON "user"("normalized_email");
@@ -88,10 +87,7 @@ ALTER TABLE "budget" ADD CONSTRAINT "budget_user_id_fkey" FOREIGN KEY ("user_id"
 ALTER TABLE "budget_category" ADD CONSTRAINT "budget_category_budget_id_fkey" FOREIGN KEY ("budget_id") REFERENCES "budget"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "_budget_category_to_tag" ADD CONSTRAINT "_budget_category_to_tag_budget_category_id_fkey" FOREIGN KEY ("budget_category_id") REFERENCES "budget_category"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "_budget_category_to_tag" ADD CONSTRAINT "_budget_category_to_tag_tag_id_fkey" FOREIGN KEY ("tag_id") REFERENCES "tag"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "budget_category" ADD CONSTRAINT "budget_category_tagId_fkey" FOREIGN KEY ("tagId") REFERENCES "tag"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "tag" ADD CONSTRAINT "tag_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
