@@ -9,7 +9,7 @@ export default fp(async app => {
   app.register(require("./account/PUT"), { prefix: "account" });
   app.register(require("./account/POST"), { prefix: "account" });
 
-  app.register(require("./budget/GET"), { prefix: "budget" });
-  app.register(require("./budget/PUT"), { prefix: "budget" });
+  app.register(require("./budget/GET"));
+  app.register(require("./budget/PUT"));
   app.register(require("./budget/:id/category/PUT"));
 });

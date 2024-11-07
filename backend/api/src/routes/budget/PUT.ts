@@ -2,7 +2,7 @@ import { FastifyPluginAsyncTypebox, Type } from "@fastify/type-provider-typebox"
 
 const route: FastifyPluginAsyncTypebox = async function (app) {
   app.put(
-    "/",
+    "/budget",
     {
       onRequest: app.authorize(),
       schema: {
