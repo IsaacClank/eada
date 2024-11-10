@@ -2,10 +2,13 @@ import { FastifyPluginAsyncTypebox, Type } from "@fastify/type-provider-typebox"
 
 const route: FastifyPluginAsyncTypebox = async function (app) {
   app.get(
-    "/budget",
+    "/budget/:budgetId",
     {
       onRequest: [app.authorize()],
       schema: {
+        params: Type.Object({
+          budgetId: Type.String(),
+        }),
         response: {
           200: Type.Object({
             id: Type.String(),
@@ -28,8 +31,10 @@ const route: FastifyPluginAsyncTypebox = async function (app) {
     },
     async (req, res) => {
       const { sub: userId } = req.user;
+      const { budgetId } = req.params;
+
       const budget = await app.db.budget.findFirst({
-        where: { userId },
+        where: { id: budgetId, userId },
         include: {
           budgetCategories: true,
         },
