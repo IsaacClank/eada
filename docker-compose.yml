@@ -22,10 +22,18 @@ services:
 
   api:
     build: ./backend/api
-    volumes:
-      - ./backend/api/src:/app/src
     ports:
       - 3000:3000
+    develop:
+      watch:
+        - action: sync
+          path: ./backend/api/src
+          target: /app/src
+        - action: rebuild
+          path: ./backend/api/package.json
+        - action: sync+restart
+          path: ./backend/api/.env.compose
+          target: /app/.env
 
   spa:
     build: ./frontend/spa

@@ -5,7 +5,7 @@
   "version": "0.1.0",
   "scripts": {
     "db:migrate": "prisma db push",
-    "start:dev": "prisma db push && node-dev --require tsconfig-paths/register src/server.ts"
+    "start:dev": "ts-node --require tsconfig-paths/register src/server.ts"
   },
   "dependencies": {
     "@fastify/cors": "^10.0.1",
