@@ -13,4 +13,6 @@ export default fp(async app => {
   app.register(require("./budget/PUT"));
   app.register(require("./budget/:id/GET"));
   app.register(require("./budget/:id/category/PUT"));
+
+  app.register(require("./transaction/POST"));
 });
