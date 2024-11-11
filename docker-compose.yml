@@ -26,11 +26,11 @@ services:
       - 3000:3000
     develop:
       watch:
-        - action: sync
-          path: ./backend/api/src
-          target: /app/src
         - action: rebuild
           path: ./backend/api/package.json
+        - action: sync+restart
+          path: ./backend/api/src/routes
+          target: /app/src/routes
         - action: sync+restart
           path: ./backend/api/.env.compose
           target: /app/.env
