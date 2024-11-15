@@ -1,64 +1,86 @@
 import { PrismaClient } from "@prisma/client";
-import { NotFoundError } from "eada/lib/error";
 import { FastifyInstance } from "fastify";
+
+export interface BudgetOverview {
+  id: string;
+  name: string;
+  normalizedName: string;
+  income: number;
+  totalRemainingInMonth: number;
+  totalExpenseInMonth: number;
+  categories: BudgetCategoryOverview[];
+}
+
+export interface BudgetCategoryOverview {
+  id: string;
+  name: string;
+  normalizedName: string;
+  percentageOfIncome: number;
+  totalExpenseInMonth: number;
+  totalRemainingInMonth: number;
+}
 
 export function extendBudgetModel(app: FastifyInstance, prisma: PrismaClient) {
   return {
-    async totalExpenseInMonth(userId: string): Promise<number> {
-      const startOfMonth = app.dayjs().startOf("month");
-      app.log.info(`Retrieving total expense in ${startOfMonth.format("MMM, YYYY")}`);
-      const transactionInMonthAggregation = await prisma.transaction.aggregate({
-        _sum: {
-          amount: true,
-        },
-        where: {
-          userId,
-          createdAt: {
-            gte: startOfMonth.toDate(),
-            lt: startOfMonth.add(1, "month").toDate(),
-          },
-        },
+    async getBudgetOverview(userId: string, budgetId: string): Promise<BudgetOverview> {
+      const budget = await prisma.budget.findUniqueOrThrow({
+        where: { userId, id: budgetId },
+        include: { budgetCategories: true },
       });
-      return transactionInMonthAggregation._sum.amount?.toNumber() ?? 0;
-    },
 
-    async totalRemainingBudgetInMonth(userId: string) {
-      const startOfMonth = app.dayjs().startOf("month");
-      app.log.info(`Retrieving total remaining budget in ${startOfMonth.format("MMM, YYYY")}`);
-      const user = await app.db.user.findUnique({
-        select: {
-          budget: {
-            take: 1,
-            select: {
-              income: true,
-            },
-          },
-          transaction: {
-            where: {
-              createdAt: {
-                gte: startOfMonth.toDate(),
-                lt: startOfMonth.add(1, "month").toDate(),
-              },
-            },
-          },
-        },
+      const transactionsInMonth = await prisma.transaction.findMany({
         where: {
-          id: userId,
+          createdAt: { gte: app.dayjs().startOf("month").toDate() },
+        },
+        include: {
+          tagToTransaction: { include: { tag: true } },
         },
       });
 
-      if (user == null) {
-        throw new NotFoundError("User not found");
-      }
+      const totalExpenseInMonth = transactionsInMonth.reduce(
+        (sum, { amount }) => sum + amount.toNumber(),
+        0,
+      );
+      const totalRemainingInMonth = budget.income.toNumber() - totalExpenseInMonth;
 
-      if (user.budget.length === 0) {
-        throw new NotFoundError("User does not have any budget");
-      }
+      const budgetCategoryIdToOverviewInfo = budget.budgetCategories.reduce(
+        (
+          idToCategoryOverview,
+          { id, name, normalizedName, percentageOfIncome, tagId: categoryTagId },
+        ) => {
+          const totalBudget = (budget.income.toNumber() * percentageOfIncome.toNumber()) / 100;
 
-      const totalBudget = user.budget[0].income.toNumber();
-      const totalExpenseInMonth =
-        user.transaction.reduce((total, { amount }) => total + amount.toNumber(), 0) ?? 0;
-      return totalBudget - totalExpenseInMonth;
+          const transactions = transactionsInMonth.filter(transaction =>
+            transaction.tagToTransaction.map(t => t.tagId).includes(categoryTagId),
+          );
+          const totalExpenseInMonth = transactions.reduce(
+            (sum, { amount }) => sum + amount.toNumber(),
+            0,
+          );
+
+          return idToCategoryOverview.set(id, {
+            id,
+            name,
+            normalizedName,
+            percentageOfIncome: percentageOfIncome.toNumber(),
+            totalExpenseInMonth,
+            totalRemainingInMonth: totalBudget - totalExpenseInMonth,
+          });
+        },
+        new Map<string, BudgetCategoryOverview>(),
+      );
+
+      return {
+        id: budget.id,
+        income: budget.income.toNumber(),
+        name: budget.name,
+        normalizedName: budget.normalizedName,
+        totalExpenseInMonth,
+        totalRemainingInMonth,
+        categories: budget.budgetCategories.map(
+          ({ id }) => budgetCategoryIdToOverviewInfo.get(id)!,
+        ),
+      };
     },
   };
 }

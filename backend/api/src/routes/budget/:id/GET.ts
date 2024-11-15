@@ -23,44 +23,18 @@ const route: FastifyPluginAsyncTypebox = async function (app) {
                 name: Type.String(),
                 normalizedName: Type.String(),
                 percentageOfIncome: Type.Number(),
+                totalRemainingInMonth: Type.Number(),
+                totalExpenseInMonth: Type.Number(),
               }),
             ),
           }),
         },
       },
     },
-    async (req, res) => {
+    async req => {
       const { sub: userId } = req.user;
       const { budgetId } = req.params;
-
-      const budget = await app.db.budget.findFirst({
-        where: { id: budgetId, userId },
-        include: {
-          budgetCategories: true,
-        },
-      });
-
-      if (budget == null) {
-        res.notFound();
-        return;
-      }
-
-      res.send({
-        id: budget.id,
-        name: budget.name,
-        normalizedName: budget.normalizedName,
-        income: budget.income.toNumber(),
-        totalExpenseInMonth: await app.db.budget.totalExpenseInMonth(userId),
-        totalRemainingInMonth: await app.db.budget.totalRemainingBudgetInMonth(userId),
-        categories: budget.budgetCategories.map(
-          ({ id, name, normalizedName, percentageOfIncome }) => ({
-            id,
-            name,
-            normalizedName,
-            percentageOfIncome: percentageOfIncome.toNumber(),
-          }),
-        ),
-      });
+      return await app.db.budget.getBudgetOverview(userId, budgetId);
     },
   );
 };
