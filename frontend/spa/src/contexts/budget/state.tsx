@@ -1,21 +1,14 @@
 import { createContext } from "react";
+import { BudgetOverview } from "./types";
 
 export interface BudgetState {
-  budget?: {
-    name?: string;
-    normalizedName?: string;
-    income?: string;
-  } | null;
+  budget?: null | BudgetOverview;
 }
 export const BudgetStateContext = createContext<BudgetState>({});
 
 export interface BudgetStateReducerInput {
   state: "unknown" | "nonExistent" | "created";
-  budget?: {
-    name?: string;
-    normalizedName?: string;
-    income?: string;
-  };
+  budget?: BudgetOverview;
 }
 export type BudgetStateReducer = React.Dispatch<BudgetStateReducerInput>;
 export const BudgetStateReducerContext = createContext<BudgetStateReducer>(_ => {});

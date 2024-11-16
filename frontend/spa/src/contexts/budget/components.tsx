@@ -1,14 +1,17 @@
 import { PropsWithChildren, useContext, useEffect, useReducer } from "react";
 
 import { AuthStateContext } from "../auth";
+import { RuntimeContext } from "../runtime";
 import {
   BudgetState,
   BudgetStateContext,
   BudgetStateReducerContext,
   BudgetStateReducerInput,
 } from "./state";
+import { BudgetList, BudgetOverview } from "./types";
 
 export function BudgetContextProvider({ children }: PropsWithChildren) {
+  const { apiClientFactory } = useContext(RuntimeContext);
   const authState = useContext(AuthStateContext);
   const [budgetState, reduceBudgetState] = useReducer(budgetStateReducer, {});
 
@@ -22,19 +25,23 @@ export function BudgetContextProvider({ children }: PropsWithChildren) {
       return;
     }
 
-    fetch("http://localhost:3000/budget", {
-      method: "GET",
-      headers: [["Authorization", `Bearer ${authState.token}`]],
-    }).then(res => {
-      if (res.ok) {
-        res.json().then(budget => reduceBudgetState({ state: "created", budget }));
-      }
+    const retrieveDefaultBudget = async () => {
+      const httpClient = apiClientFactory().token(authState.token).httpClient;
+      const budgets: BudgetList = await httpClient.getJsonAsync("budget").then(res => res.json());
 
-      if (res.status === 404) {
+      if (budgets.length === 0) {
         reduceBudgetState({ state: "nonExistent" });
       }
-    });
-  }, [authState.authenticated, reduceBudgetState]);
+
+      const defaultBudgetId = budgets.shift()!.id;
+      const budget: BudgetOverview = await httpClient
+        .getJsonAsync(`budget/${defaultBudgetId}`)
+        .then(res => res.json());
+      reduceBudgetState({ state: "created", budget });
+    };
+
+    retrieveDefaultBudget();
+  }, [authState.authenticated, reduceBudgetState, apiClientFactory]);
 
   return (
     <BudgetStateContext.Provider value={budgetState}>
