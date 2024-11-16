@@ -4,8 +4,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { SubmitForm } from "../components/form";
 import { Input } from "../components/input";
 import { PageContainer } from "../components/page";
-import { AuthStateContext, AuthStateReducerContext } from "../contexts/auth";
-import { HttpClient } from "../lib/http";
+import { AuthStateContext } from "../contexts/auth";
+import { RuntimeContext } from "../contexts/runtime";
 import { LocalStorageKey } from "../lib/std";
 
 export interface AuthPageProps {
@@ -40,26 +40,25 @@ interface AuthFormProps {
 }
 function AuthForm({ authAction }: AuthFormProps) {
   const navigate = useNavigate();
-  const patchAuthState = useContext(AuthStateReducerContext);
+  const { token } = useContext(AuthStateContext);
+  const { apiClientFactory } = useContext(RuntimeContext);
 
-  const submitForm = (e: React.FormEvent<HTMLFormElement>) => {
+  const submitForm = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = e.target as HTMLFormElement;
     const formData = new FormData(form);
     const formJson = Object.fromEntries(formData.entries());
 
-    const httpClient = new HttpClient({ baseAddress: "http://localhost:3000" });
+    const httpClient = apiClientFactory().token(token ?? null).httpClient;
 
     if (authAction === AuthAction.Register) {
       httpClient.putJsonAsync("account", formJson).then(() => navigate("/login"));
     } else {
-      httpClient
+      const tokenResponse = await httpClient
         .postJsonAsync("account/session", formJson)
-        .then(res => res.json())
-        .then(tokens => {
-          localStorage.setItem(LocalStorageKey.AccessToken, tokens.accessToken);
-          patchAuthState({ state: "authenticated", token: tokens.accessToken });
-        });
+        .then(res => res.json());
+      localStorage.setItem(LocalStorageKey.AccessToken, tokenResponse.accessToken);
+      location.reload();
     }
   };
 

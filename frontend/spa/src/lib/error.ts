@@ -3,5 +3,5 @@ export enum ErrorCodes {
 }
 
 export const error = (code: ErrorCodes, msg: string) => {
-  throw `${code}: ${msg}`;
+  return `${code}: ${msg}`;
 };

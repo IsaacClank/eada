@@ -1,8 +1,9 @@
-import { PropsWithChildren, useEffect, useReducer } from "react";
+import { PropsWithChildren, useContext, useEffect, useReducer } from "react";
 
 import { useNavigate } from "react-router-dom";
 import { error, ErrorCodes } from "../../lib/error";
 import { LocalStorageKey } from "../../lib/std";
+import { RuntimeContext } from "../runtime";
 import {
   AuthState,
   AuthStateContext,
@@ -12,6 +13,7 @@ import {
 
 export function AuthContextProvider({ children }: PropsWithChildren) {
   const navigate = useNavigate();
+  const { apiClientFactory } = useContext(RuntimeContext);
   const [authState, reduceAuthState] = useReducer(authStateReducer, {});
 
   useEffect(() => {
@@ -26,20 +28,19 @@ export function AuthContextProvider({ children }: PropsWithChildren) {
       return;
     }
 
-    fetch("http://localhost:3000/account/session", {
-      method: "GET",
-      headers: [["Authorization", `Bearer ${storedAccessToken}`]],
-    }).then(async res => {
-      if (res.ok) {
-        const body = await res.json();
-        console.log(body);
-        reduceAuthState({ state: "authenticated", token: storedAccessToken, user: body });
-      } else {
-        localStorage.removeItem(LocalStorageKey.AccessToken); // Remove the stale token
-        reduceAuthState({ state: "unauthenticated" });
-      }
-    });
-  }, [reduceAuthState]);
+    apiClientFactory()
+      .token(storedAccessToken)
+      .httpClient.getJsonAsync("account/session")
+      .then(async res => {
+        if (res.ok) {
+          const body = await res.json();
+          reduceAuthState({ state: "authenticated", token: storedAccessToken, user: body });
+        } else {
+          localStorage.removeItem(LocalStorageKey.AccessToken); // Remove the stale token
+          reduceAuthState({ state: "unauthenticated" });
+        }
+      });
+  }, [reduceAuthState, apiClientFactory]);
 
   return (
     <AuthStateContext.Provider value={authState}>
@@ -54,11 +55,11 @@ const authStateReducer = (state: AuthState, input: AuthStateReducerInput): AuthS
   switch (input.state) {
     case "authenticated":
       if (!input.token) {
-        error(ErrorCodes.UnexpectedError, "Access token not found");
+        throw error(ErrorCodes.UnexpectedError, "Access token not found");
       }
 
       if (!input.user) {
-        error(ErrorCodes.UnexpectedError, "User data not found");
+        throw error(ErrorCodes.UnexpectedError, "User data not found");
       }
 
       return { ...state, authenticated: true, token: input.token, user: input.user };
