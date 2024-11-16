@@ -39,3 +39,11 @@ services:
     build: ./frontend/spa
     ports:
       - 3010:5173
+    develop:
+      watch:
+        - action: sync
+          path: ./frontend/spa/src
+          target: /app/src
+        - action: sync+restart
+          path: ./frontend/spa/template.env
+          target: /app/.env
