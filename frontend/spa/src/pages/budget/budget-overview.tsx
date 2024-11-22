@@ -12,7 +12,7 @@ export function BudgetOverview() {
   const { budget } = useContext(BudgetStateContext);
 
   useEffect(() => {
-    if (budget == null) {
+    if (budget === null || budget?.categories.length === 0) {
       navigate("/budget/create");
       return;
     }
