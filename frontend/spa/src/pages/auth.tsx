@@ -1,8 +1,7 @@
 import { useContext, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
-import { SubmitForm } from "../components/form";
-import { Input } from "../components/input";
+import { Input, SubmitForm } from "../components/form";
 import { PageContainer } from "../components/page";
 import { AuthStateContext } from "../contexts/auth";
 import { RuntimeContext } from "../contexts/runtime";
@@ -67,13 +66,13 @@ function AuthForm({ authAction }: AuthFormProps) {
       <div className="flex flex-col gap-2">
         <div>
           <label htmlFor="email">Email</label>
-          <Input required type="email" name="email" className="inline-block" />
+          <Input type="email" name="email" className="inline-block" />
         </div>
 
         <div>
           <label htmlFor="password">Password</label>
           <div>
-            <Input required type="password" name="password" className="inline-block" />
+            <Input type="password" name="password" className="inline-block" />
           </div>
         </div>
       </div>
