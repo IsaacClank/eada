@@ -1,64 +1,164 @@
-import { FormEvent, useCallback, useContext, useEffect } from "react";
+import { useCallback, useContext, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
+import { useFieldArray, useForm } from "react-hook-form";
+import { Button } from "../../components/button";
 import { SubmitForm } from "../../components/form";
-import { Input } from "../../components/input";
+import { Input } from "../../components/form";
 import { PageContainer } from "../../components/page";
+import { H1 } from "../../components/text";
 import { AuthStateContext } from "../../contexts/auth";
 import { BudgetStateContext, BudgetStateReducerContext } from "../../contexts/budget";
+import { RuntimeContext } from "../../contexts/runtime";
 
 export function CreateBudget() {
   const navigate = useNavigate();
-  const authState = useContext(AuthStateContext);
-  const budgetState = useContext(BudgetStateContext);
-  const reduceBudgetState = useContext(BudgetStateReducerContext);
+  const { budget } = useContext(BudgetStateContext);
 
   useEffect(() => {
-    budgetState.budget != null && navigate("/");
-  }, [budgetState.budget]);
+    const budgetIsNotLoaded = budget === undefined;
+    const budgetIsCreatedWithoutSubCategories = budget != null && budget.categories.length > 0;
+    if (budgetIsNotLoaded || budgetIsCreatedWithoutSubCategories) {
+      navigate("/");
+    }
+  }, [budget]);
 
-  const submitForm = useCallback(
-    async (e: FormEvent<HTMLFormElement>) => {
-      e.preventDefault();
+  return (
+    budget !== undefined && (
+      <PageContainer className="pt-32">
+        <div className="basis-full pb-32 flex flex-col justify-between">
+          <H1 className="mb-20">
+            {budget == null
+              ? "What is your monthly income?"
+              : "Create subcategories for your budget"}
+          </H1>
 
-      const form = e.target as HTMLFormElement;
-      const formData = new FormData(form);
-      formData.append("name", "default");
-      const formJson = Object.fromEntries(formData.entries());
+          <div className="flex-grow flex flex-col items-center">
+            {budget == null ? <BudgetIncomeForm /> : <CreateBudgetCategories />}
+          </div>
+        </div>
+      </PageContainer>
+    )
+  );
+}
 
-      const res = await fetch("http://localhost:3000/budget", {
-        method: "PUT",
-        body: JSON.stringify(formJson),
-        headers: [
-          ["Authorization", `Bearer ${authState.token}`],
-          ["Content-Type", "application/json"],
-        ],
-      });
+interface CreateBudget {
+  income: number;
+}
 
-      if (res.ok) {
-        reduceBudgetState({
-          state: "created",
-          budget: await res.json(),
+function BudgetIncomeForm() {
+  const authState = useContext(AuthStateContext);
+  const reduceBudgetState = useContext(BudgetStateReducerContext);
+  const form = useForm<CreateBudget>();
+  const { apiClientFactory } = useContext(RuntimeContext);
+
+  const createBudget = useCallback(
+    async (data: CreateBudget) => {
+      const res = await apiClientFactory()
+        .token(authState.token)
+        .httpClient.putJsonAsync("budget", {
+          name: "default",
+          ...data,
         });
+      if (res.ok) {
+        reduceBudgetState({ state: "unknown" }); // Trigger reload of budget data
       }
     },
-    [authState.token, reduceBudgetState],
+    [authState.token, reduceBudgetState, apiClientFactory],
   );
 
   return (
-    budgetState.budget !== undefined && (
-      <PageContainer>
-        <form className="w-full lg:w-96 flex flex-col gap-5" onSubmit={e => submitForm(e)}>
-          <div>
-            <div>
-              <label htmlFor="income">Monthly income</label>
-              <Input type="number" name="income" required />
-            </div>
-          </div>
+    <form
+      className="size-full flex flex-col justify-between"
+      onSubmit={form.handleSubmit(data => createBudget(data))}
+    >
+      <div>
+        <Input formConfig={form.register("income", { required: true })} />
+      </div>
 
-          <SubmitForm className="p-1" />
-        </form>
-      </PageContainer>
-    )
+      <div className="flex justify-end">
+        <SubmitForm className="px-4 py-2 bg-pink-600 text-black" value="Next" />
+      </div>
+    </form>
+  );
+}
+
+interface CreateBudgetCategories {
+  categories: {
+    name?: string;
+    percentageOfIncome?: number;
+  }[];
+}
+
+function CreateBudgetCategories() {
+  const { apiClientFactory } = useContext(RuntimeContext);
+  const { token } = useContext(AuthStateContext);
+  const { budget } = useContext(BudgetStateContext);
+  const reduceBudgetState = useContext(BudgetStateReducerContext);
+
+  const form = useForm<CreateBudgetCategories>({
+    defaultValues: {
+      categories: [{}],
+    },
+  });
+  const formItems = useFieldArray({
+    name: "categories",
+    control: form.control,
+  });
+
+  const createBudgetCategories = useCallback(
+    async (data: CreateBudgetCategories) => {
+      const res = await apiClientFactory()
+        .token(token)
+        .httpClient.putJsonAsync(`budget/${budget?.id}/category`, data.categories);
+
+      if (res.ok) {
+        reduceBudgetState({ state: "unknown" }); // Trigger reload of budget data
+      }
+    },
+    [apiClientFactory, token],
+  );
+
+  return (
+    <form
+      className="size-full flex flex-col justify-between"
+      onSubmit={form.handleSubmit(createBudgetCategories)}
+    >
+      <div className="flex-grow flex flex-col items-center gap-4 mb-20">
+        <div className="flex flex-col gap-2">
+          {formItems.fields.map((field, index) => (
+            <div key={field.id} className="flex justify-between items-center gap-2">
+              <div className="basis-1/4">
+                <Input
+                  placeholder="%"
+                  formConfig={form.register(`categories.${index}.percentageOfIncome`)}
+                />
+              </div>
+
+              <div className="flex-auto">
+                <Input
+                  placeholder="Category name..."
+                  formConfig={form.register(`categories.${index}.name`)}
+                />
+              </div>
+
+              <Button
+                label="-"
+                className="size-8 bg-blue-200"
+                onClick={() => {
+                  formItems.remove(index);
+                }}
+              />
+            </div>
+          ))}
+        </div>
+
+        <Button className="size-6 bg-blue-200" onClick={() => formItems.append({})} label="+" />
+      </div>
+
+      <div className="flex justify-end">
+        <SubmitForm className="px-4 py-2 bg-pink-600 text-black" value="Next" />
+      </div>
+    </form>
   );
 }
