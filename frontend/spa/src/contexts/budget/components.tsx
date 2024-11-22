@@ -19,6 +19,9 @@ export function BudgetContextProvider({ children }: PropsWithChildren) {
     if (authState.authenticated == null || authState.token == null) {
       return;
     }
+    if (budgetState.budget !== undefined) {
+      return;
+    }
 
     if (authState.authenticated === false) {
       reduceBudgetState({ state: "unknown" });
@@ -41,7 +44,7 @@ export function BudgetContextProvider({ children }: PropsWithChildren) {
     };
 
     retrieveDefaultBudget();
-  }, [authState.authenticated, reduceBudgetState, apiClientFactory]);
+  }, [authState.authenticated, reduceBudgetState, apiClientFactory, budgetState.budget]);
 
   return (
     <BudgetStateContext.Provider value={budgetState}>
