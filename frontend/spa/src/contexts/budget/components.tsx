@@ -30,7 +30,7 @@ export function BudgetContextProvider({ children }: PropsWithChildren) {
       const budgets: BudgetList = await httpClient.getJsonAsync("budget").then(res => res.json());
 
       if (budgets.length === 0) {
-        reduceBudgetState({ state: "nonExistent" });
+        return reduceBudgetState({ state: "nonExistent" });
       }
 
       const defaultBudgetId = budgets.shift()!.id;
