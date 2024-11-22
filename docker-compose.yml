@@ -45,5 +45,8 @@ services:
           path: ./frontend/spa/src
           target: /app/src
         - action: sync+restart
+          path: ./frontend/spa/tailwind.config.js
+          target: /app/tailwind.config.js
+        - action: sync+restart
           path: ./frontend/spa/template.env
           target: /app/.env
