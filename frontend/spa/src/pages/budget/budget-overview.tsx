@@ -16,8 +16,6 @@ export function BudgetOverview() {
       navigate("/budget/create");
       return;
     }
-
-    console.log(budget);
   }, [budget]);
 
   return (
