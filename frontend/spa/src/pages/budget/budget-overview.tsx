@@ -48,7 +48,7 @@ export function BudgetOverview() {
             {budget.categories.map(
               ({ name, totalExpenseInMonth, totalRemainingInMonth }, index) => (
                 <div key={`budget_category_overview_${index}`} className="flex gap-4 items-center">
-                  <div>{name}</div>
+                  <div className="basis-1/2">{name}</div>
                   <div className="flex-grow pt-2">
                     <ProgressBar
                       className="h-1"
