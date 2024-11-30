@@ -17,6 +17,7 @@ const route: FastifyPluginAsyncTypebox = async function (app) {
             income: Type.Number(),
             totalRemainingInMonth: Type.Number(),
             totalExpenseInMonth: Type.Number(),
+            assetAccumulation: Type.Number(),
             categories: Type.Array(
               Type.Object({
                 id: Type.String(),

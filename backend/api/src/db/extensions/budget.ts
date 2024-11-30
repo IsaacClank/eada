@@ -8,6 +8,7 @@ export interface BudgetOverview {
   income: number;
   totalRemainingInMonth: number;
   totalExpenseInMonth: number;
+  assetAccumulation: number;
   categories: BudgetCategoryOverview[];
 }
 
@@ -37,11 +38,15 @@ export function extendBudgetModel(app: FastifyInstance, prisma: PrismaClient) {
         },
       });
 
-      const totalExpenseInMonth = transactionsInMonth.reduce(
-        (sum, { amount }) => sum + amount.toNumber(),
-        0,
-      );
+      const totalExpenseInMonth = transactionsInMonth
+        .filter(t => t.type === "Expense")
+        .reduce((sum, { amount }) => sum + amount.toNumber(), 0);
       const totalRemainingInMonth = budget.income.toNumber() - totalExpenseInMonth;
+
+      const actualIncome = transactionsInMonth
+        .filter(({ type }) => type === "Income")
+        .reduce((sum, { amount }) => sum + amount.toNumber(), 0);
+      const assetAccumulation = actualIncome - totalExpenseInMonth;
 
       const budgetCategoryIdToOverviewInfo = budget.budgetCategories.reduce(
         (
@@ -77,6 +82,7 @@ export function extendBudgetModel(app: FastifyInstance, prisma: PrismaClient) {
         normalizedName: budget.normalizedName,
         totalExpenseInMonth,
         totalRemainingInMonth,
+        assetAccumulation,
         categories: budget.budgetCategories.map(
           ({ id }) => budgetCategoryIdToOverviewInfo.get(id)!,
         ),
