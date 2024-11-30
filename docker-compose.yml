@@ -32,6 +32,9 @@ services:
           path: ./backend/api/src/routes
           target: /app/src/routes
         - action: sync+restart
+          path: ./backend/api/src/db
+          target: /app/src/db
+        - action: sync+restart
           path: ./backend/api/.env.compose
           target: /app/.env
 
