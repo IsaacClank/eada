@@ -17,6 +17,7 @@ async function start() {
     origin: true,
     allowedHeaders: ["Content-Type", "Authorization"],
   });
+  await app.register(require("@fastify/multipart"));
   await app.register(require("./auth"));
   await app.register(require("./dayjs"));
   await app.register(require("./db"));

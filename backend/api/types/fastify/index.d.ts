@@ -1,5 +1,6 @@
 import "@fastify/jwt";
 import "@fastify/sensible";
+import "@fastify/multipart";
 import dayjs from "dayjs";
 import "dayjs/plugin/utc";
 import { ExtendedPrismaClient } from "eada/db";
