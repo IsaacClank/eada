@@ -1,8 +1,10 @@
-import { useContext, useEffect } from "react";
+import { useCallback, useContext, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
+import { useForm } from "react-hook-form";
 import { Input, SubmitForm } from "../components/form";
 import { PageContainer } from "../components/page";
+import { H1 } from "../components/text";
 import { AuthStateContext } from "../contexts/auth";
 import { RuntimeContext } from "../contexts/runtime";
 import { LocalStorageKey } from "../lib/std";
@@ -26,8 +28,10 @@ export function AuthPage({ authAction }: AuthPageProps) {
 
   return (
     authState.authenticated != null && (
-      <PageContainer>
-        <h1 className="text-center">{authAction === AuthAction.Login ? "Login" : "Register"}</h1>
+      <PageContainer className="gap-10">
+        <div className="self-start">
+          <H1>{authAction === AuthAction.Login ? "Login" : "Register"}</H1>
+        </div>
         <AuthForm authAction={authAction} />
       </PageContainer>
     )
@@ -37,47 +41,76 @@ export function AuthPage({ authAction }: AuthPageProps) {
 interface AuthFormProps {
   authAction: AuthAction;
 }
+interface AuthFormData {
+  email: string;
+  password: string;
+}
 function AuthForm({ authAction }: AuthFormProps) {
+  const form = useForm<AuthFormData>();
   const navigate = useNavigate();
   const { token } = useContext(AuthStateContext);
   const { apiClientFactory } = useContext(RuntimeContext);
 
-  const submitForm = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const form = e.target as HTMLFormElement;
-    const formData = new FormData(form);
-    const formJson = Object.fromEntries(formData.entries());
+  const submitAuthForm = useCallback(
+    async (data: AuthFormData) => {
+      const httpClient = apiClientFactory().token(token ?? null).httpClient;
 
-    const httpClient = apiClientFactory().token(token ?? null).httpClient;
+      if (authAction === AuthAction.Register) {
+        const res = await httpClient.putJsonAsync("account", data);
+        if (res.ok) {
+          navigate("/login");
+        } else {
+          form.reset(form.getValues());
+        }
 
-    if (authAction === AuthAction.Register) {
-      httpClient.putJsonAsync("account", formJson).then(() => navigate("/login"));
-    } else {
-      const tokenResponse = await httpClient
-        .postJsonAsync("account/session", formJson)
-        .then(res => res.json());
-      localStorage.setItem(LocalStorageKey.AccessToken, tokenResponse.accessToken);
-      location.reload();
-    }
-  };
+        return;
+      }
+
+      if (authAction === AuthAction.Login) {
+        const res = await httpClient.postJsonAsync("account/session", data);
+        if (res.ok) {
+          const resJsonContent = await res.json();
+          localStorage.setItem(LocalStorageKey.AccessToken, resJsonContent.accessToken);
+          location.reload();
+        } else {
+          form.resetField("password");
+        }
+        return;
+      }
+    },
+    [apiClientFactory, token, navigate],
+  );
+
+  useEffect(() => {
+    form.reset();
+  }, [authAction]);
 
   return (
-    <form className="w-full lg:w-96 flex flex-col gap-5" onSubmit={e => submitForm(e)}>
+    <form
+      className="w-full lg:w-96 flex flex-col gap-8"
+      onSubmit={form.handleSubmit(data => submitAuthForm(data))}
+    >
       <div className="flex flex-col gap-2">
         <div>
-          <label htmlFor="email">Email</label>
-          <Input type="email" name="email" className="inline-block" />
+          <Input
+            label="Email"
+            type="email"
+            formConfig={form.register("email", { required: true })}
+            className="inline-block"
+          />
         </div>
 
         <div>
-          <label htmlFor="password">Password</label>
-          <div>
-            <Input type="password" name="password" className="inline-block" />
-          </div>
+          <Input
+            label="Password"
+            type="password"
+            formConfig={form.register("password", { required: true })}
+            className="inline-block"
+          />
         </div>
       </div>
 
-      <SubmitForm />
+      <SubmitForm className="px-4 py-2 bg-blue-600 text-black" />
 
       {authAction === AuthAction.Login ? <PromptRegistration /> : <PromptLogin />}
     </form>
@@ -87,7 +120,11 @@ function AuthForm({ authAction }: AuthFormProps) {
 function PromptRegistration() {
   return (
     <span>
-      Don't have an account? <Link to={"/register"}>Register</Link> one
+      Don't have an account?{" "}
+      <Link className="text-pink-600" to={"/register"}>
+        Register
+      </Link>{" "}
+      one
     </span>
   );
 }
@@ -95,7 +132,11 @@ function PromptRegistration() {
 function PromptLogin() {
   return (
     <span>
-      Already have an account? <Link to={"/login"}>Login</Link> now
+      Already have an account?{" "}
+      <Link className="text-pink-600" to={"/login"}>
+        Login
+      </Link>{" "}
+      now
     </span>
   );
 }
