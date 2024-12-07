@@ -9,19 +9,39 @@ services:
       - POSTGRES_PASSWORD=Password0.
     volumes:
       - ./backend/db/data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready", "-U", "eada", "-d", "eada"]
+      interval: 1m30s
+      timeout: 30s
+      retries: 5
+      start_period: 30s
 
   db_client:
     build: ./backend/db/pgadmin
     depends_on:
-      - db
+      db:
+        condition: service_started
+        restart: true
     ports:
       - 2001:80
     environment:
       - PGADMIN_DEFAULT_EMAIL=admin@mail.com
       - PGADMIN_DEFAULT_PASSWORD=Password0.
 
+  api_migrate:
+    build: ./backend/api
+    depends_on:
+      db:
+        condition: service_healthy
+        restart: true
+    command: run db:migrate
+
   api:
     build: ./backend/api
+    depends_on:
+      api_migrate:
+        condition: service_completed_successfully
+        restart: true
     ports:
       - 3000:3000
     develop:
