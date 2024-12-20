@@ -49,19 +49,47 @@ const route: FastifyPluginAsyncTypebox = async app => {
 
       const newBudgetCategoryNames = budgetCategories.map(c => c.name.normalize());
       const removingTagIds = budget.budgetCategories
-        .filter(({ normalizedName }) => !newBudgetCategoryNames.includes(normalizedName))
+        .filter(({ tag }) => !newBudgetCategoryNames.includes(tag.normalizedName))
         .reduce((tagIds: string[], category) => tagIds.concat(category.tagId), []);
+
+      const categoryNameToTagId = budget.budgetCategories.reduce((categoryToTagId: any, bc) => {
+        if (!removingTagIds.includes(bc.tagId)) {
+          categoryToTagId[bc.tag.normalizedName] = bc.tagId;
+        }
+
+        return categoryToTagId;
+      }, {});
 
       await app.db.$transaction([
         app.db.tag.deleteMany({ where: { id: { in: removingTagIds } } }),
+
+        ...budgetCategories.map(({name, percentageOfIncome}) => app.db.budgetCategory.upsert({
+          where: {
+            budgetId: budget.id,
+            tag: {
+              normalizedName: name.normalize()
+            },
+          },
+          update: {
+            percentageOfIncome,
+          },
+          create: {
+            budgetId: budget.id,
+            percentageOfIncome,
+          }
+        })),
+
         app.db.budget.update({
           where: { id: budget.id },
           data: {
             budgetCategories: {
               upsert: budgetCategories.map(({ name, percentageOfIncome }) => ({
+                where: {
+                  tag: {
+                    normalizedName: name.normalize(),
+                  },
+                },
                 create: {
-                  name,
-                  normalizedName: name.normalize(),
                   percentageOfIncome,
                   tag: {
                     create: {
@@ -75,12 +103,6 @@ const route: FastifyPluginAsyncTypebox = async app => {
                   },
                 },
                 update: { percentageOfIncome },
-                where: {
-                  budgetId_normalizedName: {
-                    budgetId: budget.id,
-                    normalizedName: name.normalize(),
-                  },
-                },
               })),
             },
           },

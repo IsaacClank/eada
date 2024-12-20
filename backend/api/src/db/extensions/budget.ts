@@ -26,7 +26,13 @@ export function extendBudgetModel(app: FastifyInstance, prisma: PrismaClient) {
     async getBudgetOverview(userId: string, budgetId: string): Promise<BudgetOverview> {
       const budget = await prisma.budget.findUniqueOrThrow({
         where: { userId, id: budgetId },
-        include: { budgetCategories: true },
+        include: {
+          budgetCategories: {
+            include: {
+              tag: true,
+            },
+          },
+        },
       });
 
       const transactionsInMonth = await prisma.transaction.findMany({
@@ -51,7 +57,7 @@ export function extendBudgetModel(app: FastifyInstance, prisma: PrismaClient) {
       const budgetCategoryIdToOverviewInfo = budget.budgetCategories.reduce(
         (
           idToCategoryOverview,
-          { id, name, normalizedName, percentageOfIncome, tagId: categoryTagId },
+          { id, percentageOfIncome, tagId: categoryTagId, tag: { name, normalizedName } },
         ) => {
           const totalBudget = (budget.income.toNumber() * percentageOfIncome.toNumber()) / 100;
 
