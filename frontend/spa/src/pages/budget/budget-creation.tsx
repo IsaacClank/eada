@@ -3,8 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 import { useFieldArray, useForm } from "react-hook-form";
 import { Button } from "../../components/button";
-import { SubmitForm } from "../../components/form";
-import { Input } from "../../components/form";
+import { Input, SubmitForm } from "../../components/form";
 import { PageContainer } from "../../components/page";
 import { H1 } from "../../components/text";
 import { AuthStateContext } from "../../contexts/auth";
@@ -143,17 +142,20 @@ function CreateBudgetCategories() {
               </div>
 
               <Button
-                label="-"
                 className="size-8 bg-blue-200"
                 onClick={() => {
                   formItems.remove(index);
                 }}
-              />
+              >
+                -
+              </Button>
             </div>
           ))}
         </div>
 
-        <Button className="size-6 bg-blue-200" onClick={() => formItems.append({})} label="+" />
+        <Button className="size-6 bg-blue-200" onClick={() => formItems.append({})}>
+          +
+        </Button>
       </div>
 
       <div className="flex justify-end">

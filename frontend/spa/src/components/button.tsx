@@ -1,11 +1,10 @@
-import { BaseProps } from "../lib/std";
+import { BasePropsWithChildren } from "../lib/std";
 
-export interface ButtonProps extends BaseProps {
-  label?: string;
+export interface ButtonProps extends BasePropsWithChildren {
   onClick?: () => void;
 }
 
-export function Button({ className, label, onClick }: ButtonProps) {
+export function Button({ className, children, onClick }: ButtonProps) {
   return (
     <button
       onClick={e => {
@@ -14,7 +13,7 @@ export function Button({ className, label, onClick }: ButtonProps) {
       }}
       className={className + " flex justify-center items-center rounded-sm text-sm"}
     >
-      {label ?? "Submit"}
+      {children ?? "Submit"}
     </button>
   );
 }
