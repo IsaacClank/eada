@@ -37,7 +37,7 @@ model BudgetCategory {
 
   budgetId String? @map("budget_id")
   budget   Budget? @relation(fields: [budgetId], references: [id])
-  tagId    String  @unique
+  tagId    String  @unique @map("tag_id")
   tag      Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
   @@unique([budgetId, normalizedName])
