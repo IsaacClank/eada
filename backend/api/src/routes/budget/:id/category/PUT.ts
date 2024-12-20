@@ -1,4 +1,5 @@
 import { FastifyPluginAsyncTypebox, Type } from "@fastify/type-provider-typebox";
+import { Tag } from "@prisma/client";
 import { NotFoundError } from "eada/lib/error";
 
 const route: FastifyPluginAsyncTypebox = async app => {
@@ -37,20 +38,30 @@ const route: FastifyPluginAsyncTypebox = async app => {
         throw new NotFoundError("Budget does not exist");
       }
 
-      const budgetCategories = req.body;
-      const totalPercentageOfIncome = budgetCategories.reduce(
+      const budgetCategoriesToUpsert = req.body;
+
+      const totalPercentageOfIncome = budgetCategoriesToUpsert.reduce(
         (total, { percentageOfIncome }) => total + percentageOfIncome,
         0,
       );
-
       if (totalPercentageOfIncome > 100) {
         throw new InvalidTotalPercentage("Budget breakdown cannot exceed 100%");
       }
 
-      const newBudgetCategoryNames = budgetCategories.map(c => c.name.normalize());
+      const remainingBudgetCategoryNames = budgetCategoriesToUpsert.map(c => c.name.normalize());
+
       const removingTagIds = budget.budgetCategories
-        .filter(({ normalizedName }) => !newBudgetCategoryNames.includes(normalizedName))
-        .reduce((tagIds: string[], category) => tagIds.concat(category.tagId), []);
+        .reduce((tags: Tag[], { tag }) => tags.concat(tag), [])
+        .filter(tag => !remainingBudgetCategoryNames.includes(tag.normalizedName))
+        .map(tag => tag.id);
+
+      const categoryNameToTagId = budget.budgetCategories.reduce((categoryToTagId: any, bc) => {
+        if (!removingTagIds.includes(bc.tagId)) {
+          categoryToTagId[bc.tag.normalizedName] = bc.tagId;
+        }
+
+        return categoryToTagId;
+      }, {});
 
       await app.db.$transaction([
         app.db.tag.deleteMany({ where: { id: { in: removingTagIds } } }),
@@ -58,10 +69,11 @@ const route: FastifyPluginAsyncTypebox = async app => {
           where: { id: budget.id },
           data: {
             budgetCategories: {
-              upsert: budgetCategories.map(({ name, percentageOfIncome }) => ({
+              upsert: budgetCategoriesToUpsert.map(({ name, percentageOfIncome }) => ({
+                where: {
+                  tagId: categoryNameToTagId[name] ?? "",
+                },
                 create: {
-                  name,
-                  normalizedName: name.normalize(),
                   percentageOfIncome,
                   tag: {
                     create: {
@@ -75,12 +87,6 @@ const route: FastifyPluginAsyncTypebox = async app => {
                   },
                 },
                 update: { percentageOfIncome },
-                where: {
-                  budgetId_normalizedName: {
-                    budgetId: budget.id,
-                    normalizedName: name.normalize(),
-                  },
-                },
               })),
             },
           },

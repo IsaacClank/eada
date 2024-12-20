@@ -29,9 +29,7 @@ model Budget {
 }
 
 model BudgetCategory {
-  id             String @id @default(uuid())
-  name           String @db.VarChar(30)
-  normalizedName String @map("normalized Name") @db.VarChar(60)
+  id String @id @default(uuid())
 
   percentageOfIncome Decimal @map("percentange_of_income") @db.Decimal(4, 2)
 
@@ -40,7 +38,6 @@ model BudgetCategory {
   tagId    String  @unique @map("tag_id")
   tag      Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
-  @@unique([budgetId, normalizedName])
   @@map("budget_category")
 }
 
