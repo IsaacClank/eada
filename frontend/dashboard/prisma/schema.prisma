@@ -11,80 +11,45 @@ datasource db {
 }
 
 model Budget {
-  Id             String @id @default(uuid())
-  Name           String @map("name")
-  NormalizedName String
+  id             String  @id @default(uuid())
+  name           String  @map("name")
+  normalizedName String  @unique
+  income         Decimal
 
-  Income Decimal
-
-  BudgetCategories BudgetCategory[]
-  UserId           String
-  User             User             @relation(fields: [UserId], references: [Id])
-
-  @@unique([UserId, NormalizedName])
+  budgetCategories BudgetCategory[]
 }
 
 model BudgetCategory {
-  Id String @id @default(uuid())
+  id                 String  @id @default(uuid())
+  percentageOfIncome Decimal
 
-  PercenTageOfIncome Decimal
-
-  BudgetId String?
-  Budget   Budget? @relation(fields: [BudgetId], references: [Id])
-  TagId    String  @unique
-  Tag      Tag     @relation(fields: [TagId], references: [Id], onDelete: Cascade)
+  budgetId String?
+  budget   Budget? @relation(fields: [budgetId], references: [id])
+  tagId    String  @unique
+  tag      Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
 }
 
 model Tag {
-  Id             String @id @default(uuid())
+  id             String @id @default(uuid())
   name           String
-  NormalizedName String
+  normalizedName String @unique
+  info           Json?
 
-  Info Json?
-
-  TagToTransaction TagToTransaction[]
-  UserId           String
-  User             User               @relation(fields: [UserId], references: [Id])
-  BudgetCategory   BudgetCategory?
-
-  @@unique([UserId, NormalizedName])
-}
-
-model TagToTransaction {
-  TagId         String
-  Tag           Tag         @relation(fields: [TagId], references: [Id])
-  TransactionId String
-  Transaction   Transaction @relation(fields: [TransactionId], references: [Id])
-
-  @@id([TagId, TransactionId])
+  budgetCategory BudgetCategory?
+  transactions   Transaction[]
 }
 
 model Transaction {
-  Id        String   @id @default(uuid())
+  id        String          @id @default(uuid())
   createdAt DateTime
+  amount    Decimal
+  notes     String
+  type      TransactionType
 
-  Amount Decimal
-  Notes  String
-  Type   TransactionType
-
-  TagToTransaction TagToTransaction[]
-  UserId           String
-  User             User               @relation(fields: [UserId], references: [Id])
+  tags Tag[]
 }
 
 enum TransactionType {
   Expense
   Income
-}
-
-model User {
-  Id String @id @default(uuid())
-
-  Email             String
-  NormalizedEmail   String @unique
-  EncryptedPassword String
-
-  Budget      Budget[]
-  Tag         Tag[]
-  Transaction Transaction[]
 }
