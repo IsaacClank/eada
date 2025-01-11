@@ -18,8 +18,11 @@
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+    "types": [
+      "vitest/importMeta"
+    ]
   },
-  "include": ["src", "electron"],
+  "include": ["src", "electron", "lib"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }
