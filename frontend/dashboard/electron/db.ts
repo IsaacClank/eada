@@ -1,7 +1,7 @@
 import { Budget, PrismaClient, TransactionType } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import * as childProcess from "node:child_process";
-import { datetime } from "../lib/datetime";
+import { datetime } from "../shared/datetime";
 
 export const db = () => new PrismaClient();
 
