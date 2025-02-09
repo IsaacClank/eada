@@ -258,12 +258,6 @@ export namespace vitest {
     });
 
     describe("createTransactionsAsync", () => {
-      let defaultBudget: Budget;
-
-      beforeAll(async () => {
-        defaultBudget = await upsertBudgetAsync(DEFAULT_BUDGET_NAME, 40000000);
-      });
-
       test("creates transactions and related tags", async () => {
         await createTransactionsAsync([
           {
