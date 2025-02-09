@@ -4,7 +4,7 @@ import * as childProcess from "node:child_process";
 import { datetime } from "@lib/datetime";
 import { DEFAULT_BUDGET_NAME } from "./const";
 import { EntityNotFound, TotalIncomePercentageExceeded } from "./error";
-import { CreateTransactionDto } from "./contracts";
+import { CreateBudgetCategory, CreateTransaction } from "./contracts";
 
 export const db = () => new PrismaClient();
 
@@ -28,17 +28,17 @@ export async function getDefaultBudgetAsync() {
   return await getBudgetByNameAsync(DEFAULT_BUDGET_NAME.normalize());
 }
 
-export async function getBudgetByNameAsync(normalizedName: string) {
+export async function getBudgetByNameAsync(name: string) {
   return db().budget.findUnique({
     where: {
-      normalizedName: normalizedName.normalize(),
+      normalizedName: name.normalize(),
     },
   });
 }
 
 export async function createCategoriesForBudgetAsync(
   id: string,
-  categories: { name: string; percentageOfIncome: number }[],
+  categories: CreateBudgetCategory[],
 ) {
   const totalPercentageOfIncome = categories.reduce(
     (sum, category) => sum + category.percentageOfIncome,
@@ -77,7 +77,7 @@ export async function createCategoriesForBudgetAsync(
 }
 
 export async function createTransactionsAsync(
-  transactions: CreateTransactionDto[],
+  transactions: CreateTransaction[],
 ) {
   await db().$transaction(
     transactions.map(({ createdAt, type, amount, notes, tags }) =>
