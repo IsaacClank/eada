@@ -1,6 +1,7 @@
 import { app, BrowserWindow } from "electron";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
+import { initIpc } from "./ipc";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -45,4 +46,7 @@ app.on("activate", () => {
   }
 });
 
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  initIpc();
+  createWindow();
+});

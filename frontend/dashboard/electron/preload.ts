@@ -1,26 +1,27 @@
-import { ipcRenderer, contextBridge } from "electron";
+import { contextBridge, ipcRenderer } from "electron";
+import { IpcCommand } from "./ipc";
+import { CreateBudgetCategory, CreateTransaction } from "./db/contracts";
 
-// --------- Expose some API to the Renderer process ---------
-contextBridge.exposeInMainWorld("ipcRenderer", {
-  on(...args: Parameters<typeof ipcRenderer.on>) {
-    const [channel, listener] = args;
-    return ipcRenderer.on(channel, (event, ...args) =>
-      listener(event, ...args),
-    );
-  },
-  off(...args: Parameters<typeof ipcRenderer.off>) {
-    const [channel, ...omit] = args;
-    return ipcRenderer.off(channel, ...omit);
-  },
-  send(...args: Parameters<typeof ipcRenderer.send>) {
-    const [channel, ...omit] = args;
-    return ipcRenderer.send(channel, ...omit);
-  },
-  invoke(...args: Parameters<typeof ipcRenderer.invoke>) {
-    const [channel, ...omit] = args;
-    return ipcRenderer.invoke(channel, ...omit);
-  },
+contextBridge.exposeInMainWorld("db", {
+  upsertBudgetAsync: (name: string, income: number) =>
+    ipcRenderer.invoke(IpcCommand.UpsertBudgetAsync, name, income),
 
-  // You can expose other APTs you need here.
-  // ...
+  getDefaultBudgetAsync: () =>
+    ipcRenderer.invoke(IpcCommand.GetDefaultBudgetAsync),
+
+  getBudgetByNameAsync: (name: string) =>
+    ipcRenderer.invoke(IpcCommand.GetBudgetByNameAsync, name),
+
+  createCategoriesForBudgetAsync: (
+    id: string,
+    categories: CreateBudgetCategory[],
+  ) =>
+    ipcRenderer.invoke(
+      IpcCommand.CreateCategoriesForBudgetAsync,
+      id,
+      categories,
+    ),
+
+  createTransactionsAsync: (data: CreateTransaction[]) =>
+    ipcRenderer.invoke(IpcCommand.CreateTransactionsAsync, data),
 });

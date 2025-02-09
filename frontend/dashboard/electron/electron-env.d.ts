@@ -1,5 +1,8 @@
 /// <reference types="vite-plugin-electron/electron-env" />
 
+import { Budget } from "@prisma/client";
+import { CreateBudgetCategory, CreateTransaction } from "./db/contracts";
+
 declare namespace NodeJS {
   interface ProcessEnv {
     /**
@@ -24,4 +27,14 @@ declare namespace NodeJS {
 // Used in Renderer process, expose in `preload.ts`
 interface Window {
   ipcRenderer: import("electron").IpcRenderer;
+  db: {
+    upsertBudgetAsync: (name: string, income: number) => Promise;
+    getDefaultBudgetAsync: () => Promise<Budget>;
+    getBudgetByNameAsync: (name: string) => Promise<Budget?>;
+    createCategoriesForBudgetAsync: (
+      id,
+      categories: CreateBudgetCategory[],
+    ) => Promise;
+    createTransactionsAsync: (transactions: CreateTransaction[]) => Promise;
+  };
 }
