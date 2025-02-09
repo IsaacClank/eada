@@ -1,11 +1,12 @@
-import { Budget, PrismaClient, TransactionType } from "@prisma/client";
+import { Budget, PrismaClient } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import * as childProcess from "node:child_process";
-import { datetime } from "../shared/datetime";
+import { datetime } from "@lib/datetime";
+import { DEFAULT_BUDGET_NAME } from "./const";
+import { EntityNotFound, TotalIncomePercentageExceeded } from "./error";
+import { CreateTransactionDto } from "./contracts";
 
 export const db = () => new PrismaClient();
-
-const DEFAULT_BUDGET_NAME = "default";
 
 export async function upsertBudgetAsync(name: string, income: number) {
   return await db().budget.upsert({
@@ -45,14 +46,12 @@ export async function createCategoriesForBudgetAsync(
   );
 
   if (totalPercentageOfIncome > 100) {
-    throw new Error("Budget breakdown cannot exceed 100%");
+    throw new TotalIncomePercentageExceeded();
   }
 
   const budget = await db().budget.findFirst({ where: { id } });
   if (budget == null) {
-    throw new Error(
-      `An existing Budget cannot be found for the given id: ${id}`,
-    );
+    throw new EntityNotFound(`Budget with id (${id}) not found`);
   }
 
   await db().$transaction([
@@ -77,13 +76,6 @@ export async function createCategoriesForBudgetAsync(
   ]);
 }
 
-interface CreateTransactionDto {
-  createdAt: Date | string;
-  type: TransactionType;
-  amount: number;
-  notes: string;
-  tags: string[];
-}
 export async function createTransactionsAsync(
   transactions: CreateTransactionDto[],
 ) {
@@ -205,7 +197,7 @@ export namespace vitest {
             { name: "needs", percentageOfIncome: 70 },
             { name: "wants", percentageOfIncome: 70 },
           ]),
-        ).rejects.toThrowError("Budget breakdown cannot exceed 100%");
+        ).rejects.toThrowError(TotalIncomePercentageExceeded);
       });
 
       test("throws if specified budget does not exist", async () => {
@@ -216,9 +208,7 @@ export namespace vitest {
             { name: "needs", percentageOfIncome: 50 },
             { name: "wants", percentageOfIncome: 30 },
           ]),
-        ).rejects.toThrow(
-          `An existing Budget cannot be found for the given id: ${expectedInvalidId}`,
-        );
+        ).rejects.toThrow(EntityNotFound);
       });
 
       test("creates budget categories and related tags", async () => {
