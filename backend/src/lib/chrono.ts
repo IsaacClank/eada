@@ -92,9 +92,15 @@ export class ChronoSpan {
 
   toString(format: ChronoSpanFormat) {
     const hours = this.hours;
-    const minutes = this.minutes % (this.hours * 60);
-    const seconds = this.seconds % (this.minutes * 60);
-    const milliSeconds = this.milliSeconds % (this.seconds * 1000);
+
+    let minutes = this.minutes % (this.hours * 60);
+    minutes = isNaN(minutes) ? 0 : minutes;
+
+    let seconds = this.seconds % (this.minutes * 60);
+    seconds = isNaN(seconds) ? 0 : seconds;
+
+    let milliSeconds = this.milliSeconds % (this.seconds * 1000);
+    milliSeconds = isNaN(milliSeconds) ? 0 : milliSeconds;
 
     const hoursStr = hours.toString().padStart(2, "0");
     const minutesStr = minutes.toString().padStart(2, "0");

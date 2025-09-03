@@ -1,5 +1,5 @@
 import { assertEquals } from "@std/assert";
-import { describe, it } from "@std/testing/bdd";
+import { beforeAll, describe, it } from "@std/testing/bdd";
 import {
   Chrono,
   ChronoFormat,
@@ -8,8 +8,12 @@ import {
 } from "./chrono.ts";
 
 describe("Chrono", () => {
+  beforeAll(() => {
+    Deno.env.set("TZ", "Asia/Ho_Chi_Minh");
+  });
+
   describe("toString()", () => {
-    it("can display datetime using the basic format", () => {
+    it("should display datetime using the basic format", () => {
       const now = new Date();
       assertEquals(
         new Chrono(now).toString(ChronoFormat.Basic),
@@ -17,7 +21,7 @@ describe("Chrono", () => {
       );
     });
 
-    it("can display datetime using ISO 8061 format", () => {
+    it("should display datetime using ISO 8061 format", () => {
       const now = new Date(2025, 0, 1, 7, 30, 5, 500);
       assertEquals(
         new Chrono(now).toString(ChronoFormat.Iso8061),
@@ -27,14 +31,14 @@ describe("Chrono", () => {
   });
 
   describe("unixInMilliseconds()", () => {
-    it("returns milliseconds since the unix epoch", () => {
+    it("should return milliseconds since the unix epoch", () => {
       const now = new Date();
       assertEquals(new Chrono(now).unixInMilliSeconds(), now.getTime());
     });
   });
 
   describe("diffInMilliseconds()", () => {
-    it("returns milliseconds since the unix epoch", () => {
+    it("should return difference in milliseconds between two Chrono instances", () => {
       const now = new Date();
 
       const twoMinutesAgo = new Date(now.getTime() - 2 * 60 * 1000);
@@ -60,7 +64,7 @@ describe("Chrono", () => {
 
 describe("ChronoSpan", () => {
   describe("fromMilliseconds()", () => {
-    it("instantiate from milliseconds", () => {
+    it("should instantiate from milliseconds", () => {
       const chronoSpan = ChronoSpan.fromMilliseconds(500);
       assertEquals(chronoSpan.milliSeconds, 500);
       assertEquals(chronoSpan.seconds, 0);
@@ -70,7 +74,7 @@ describe("ChronoSpan", () => {
   });
 
   describe("fromSeconds()", () => {
-    it("instantiate from milliseconds", () => {
+    it("should instantiate from seconds", () => {
       const chronoSpan = ChronoSpan.fromSeconds(30.5);
       assertEquals(chronoSpan.milliSeconds, 30500);
       assertEquals(chronoSpan.seconds, 30);
@@ -80,7 +84,7 @@ describe("ChronoSpan", () => {
   });
 
   describe("fromMinutes()", () => {
-    it("instantiate from milliseconds", () => {
+    it("should instantiate from minutes", () => {
       const chronoSpan = ChronoSpan.fromMinutes(30.59);
       assertEquals(chronoSpan.milliSeconds, 1835400);
       assertEquals(chronoSpan.seconds, 1835);
@@ -90,7 +94,7 @@ describe("ChronoSpan", () => {
   });
 
   describe("fromHours()", () => {
-    it("instantiate from milliseconds", () => {
+    it("should instantiate from hours", () => {
       const chronoSpan = ChronoSpan.fromHours(2.49);
       assertEquals(chronoSpan.milliSeconds, 8964000);
       assertEquals(chronoSpan.seconds, 8964);
@@ -100,12 +104,24 @@ describe("ChronoSpan", () => {
   });
 
   describe("toString()", () => {
-    it("dislay timespan using the basic format", () => {
-      const chronoSpan = ChronoSpan.fromHours(2.25);
-      assertEquals(chronoSpan.toString(ChronoSpanFormat.Basic), "02:15:00.000");
+    it("should dislay timespan using the basic format", () => {
+      assertEquals(
+        ChronoSpan.fromHours(0).toString(ChronoSpanFormat.Basic),
+        "00:00:00.000",
+      );
+
+      assertEquals(
+        ChronoSpan.fromHours(2.25).toString(ChronoSpanFormat.Basic),
+        "02:15:00.000",
+      );
     });
 
-    it("dislay timespan using the TimeZone format", () => {
+    it("should dislay timespan using the TimeZone format", () => {
+      assertEquals(
+        ChronoSpan.fromHours(0).toString(ChronoSpanFormat.Basic),
+        "00:00:00.000",
+      );
+
       assertEquals(
         ChronoSpan.fromHours(2.5).toString(ChronoSpanFormat.TimeZone),
         "+0230",
