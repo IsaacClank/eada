@@ -6,10 +6,113 @@ import {
   ChronoSpan,
   ChronoSpanFormat,
 } from "./chrono.ts";
+import assert from "node:assert";
 
 describe("Chrono", () => {
   beforeAll(() => {
     Deno.env.set("TZ", "Asia/Ho_Chi_Minh");
+  });
+
+  describe("can be instantiated", () => {
+    it("from current datetime", () => {
+      const expected = new Date();
+      const actual = Chrono.now();
+      assert(Math.round(actual.millis() - expected.getTime()) <= 1);
+    });
+
+    it("from unix timestamp", () => {
+      const timestamp = 1738368000;
+      const expected = new Date(timestamp * 1000);
+      const actual = Chrono.fromUnix(timestamp);
+      assertEquals(actual.millis(), expected.getTime());
+    });
+
+    it("from millis timestamp", () => {
+      const timestamp = 1738368000123;
+      const expected = new Date(timestamp);
+      const actual = Chrono.fromMillis(timestamp);
+      assertEquals(actual.millis(), expected.getTime());
+    });
+  });
+
+  describe("unix()", () => {
+    it("should return seconds since the unix epoch", () => {
+      const now = new Date();
+      assertEquals(new Chrono(now).unix(), Math.floor(now.getTime() / 1000));
+    });
+  });
+
+  describe("unixInMilliseconds()", () => {
+    it("should return milliseconds since the unix epoch", () => {
+      const now = new Date();
+      assertEquals(new Chrono(now).millis(), now.getTime());
+    });
+  });
+
+  describe("diff()", () => {
+    it("should return a ChronoSpan representing the difference between two Chrono instances", () => {
+      const now = new Date();
+
+      const oneHundredMillisAgo = new Date(now.getTime() - 100);
+      assertEquals(
+        Chrono.from(now).diff(Chrono.from(oneHundredMillisAgo)).milliseconds,
+        100,
+      );
+
+      const twoMinutesAgo = new Date(now.getTime() - 2 * 60 * 1000);
+      assertEquals(
+        Chrono.from(now).diff(Chrono.from(twoMinutesAgo)).minutes,
+        2,
+      );
+
+      const threeMinutesAgo = new Date(now.getTime() - 3 * 60 * 1000);
+      assertEquals(
+        Chrono.from(now).diff(Chrono.from(threeMinutesAgo)).minutes,
+        3,
+      );
+
+      const anHourAgo = new Date(now.getTime() - 1 * 60 * 60 * 1000);
+      assertEquals(Chrono.from(now).diff(Chrono.from(anHourAgo)).hours, 1);
+    });
+  });
+
+  describe("startOf() should return a cloned Chrono set to the start of", () => {
+    it("the day", () => {
+      const datetime = new Date(2025, 1, 1, 7, 0, 0, 0);
+      const expected = new Date(
+        datetime.getFullYear(),
+        datetime.getMonth(),
+        datetime.getDate(),
+        0,
+        0,
+        0,
+        0,
+      );
+      const actual = Chrono.from(datetime).startOf("Day");
+      assertEquals(actual.millis(), expected.getTime());
+    });
+
+    it("the month", () => {
+      const datetime = new Date();
+      const expected = new Date(
+        datetime.getFullYear(),
+        datetime.getMonth(),
+        1,
+        0,
+        0,
+        0,
+        0,
+      );
+      const actual = Chrono.from(datetime).startOf("Month");
+      assertEquals(actual.millis(), expected.getTime());
+    });
+
+    it("the year", () => {
+      const datetime = new Date();
+      const today = new Date(datetime.getFullYear(), 0, 1, 0, 0, 0, 0);
+      const actual = Chrono.from(datetime).startOf("Year");
+      assertEquals(actual.millis(), today.getTime());
+    });
   });
 
   describe("toString()", () => {
@@ -29,44 +132,13 @@ describe("Chrono", () => {
       );
     });
   });
-
-  describe("unixInMilliseconds()", () => {
-    it("should return milliseconds since the unix epoch", () => {
-      const now = new Date();
-      assertEquals(new Chrono(now).unixInMilliSeconds(), now.getTime());
-    });
-  });
-
-  describe("diffInMilliseconds()", () => {
-    it("should return difference in milliseconds between two Chrono instances", () => {
-      const now = new Date();
-
-      const twoMinutesAgo = new Date(now.getTime() - 2 * 60 * 1000);
-      assertEquals(
-        new Chrono(now).diffInMilliseconds(new Chrono(twoMinutesAgo)),
-        2 * 60 * 1000,
-      );
-
-      const threeMinutesAgo = new Date(now.getTime() - 3 * 60 * 1000);
-      assertEquals(
-        new Chrono(now).diffInMilliseconds(new Chrono(threeMinutesAgo)),
-        3 * 60 * 1000,
-      );
-
-      const anHourAgo = new Date(now.getTime() - 1 * 60 * 60 * 1000);
-      assertEquals(
-        new Chrono(now).diffInMilliseconds(new Chrono(anHourAgo)),
-        1 * 60 * 60 * 1000,
-      );
-    });
-  });
 });
 
 describe("ChronoSpan", () => {
   describe("fromMilliseconds()", () => {
     it("should instantiate from milliseconds", () => {
       const chronoSpan = ChronoSpan.fromMilliseconds(500);
-      assertEquals(chronoSpan.milliSeconds, 500);
+      assertEquals(chronoSpan.milliseconds, 500);
       assertEquals(chronoSpan.seconds, 0);
       assertEquals(chronoSpan.minutes, 0);
       assertEquals(chronoSpan.hours, 0);
@@ -76,7 +148,7 @@ describe("ChronoSpan", () => {
   describe("fromSeconds()", () => {
     it("should instantiate from seconds", () => {
       const chronoSpan = ChronoSpan.fromSeconds(30.5);
-      assertEquals(chronoSpan.milliSeconds, 30500);
+      assertEquals(chronoSpan.milliseconds, 30500);
       assertEquals(chronoSpan.seconds, 30);
       assertEquals(chronoSpan.minutes, 0);
       assertEquals(chronoSpan.hours, 0);
@@ -86,7 +158,7 @@ describe("ChronoSpan", () => {
   describe("fromMinutes()", () => {
     it("should instantiate from minutes", () => {
       const chronoSpan = ChronoSpan.fromMinutes(30.59);
-      assertEquals(chronoSpan.milliSeconds, 1835400);
+      assertEquals(chronoSpan.milliseconds, 1835400);
       assertEquals(chronoSpan.seconds, 1835);
       assertEquals(chronoSpan.minutes, 30);
       assertEquals(chronoSpan.hours, 0);
@@ -96,7 +168,7 @@ describe("ChronoSpan", () => {
   describe("fromHours()", () => {
     it("should instantiate from hours", () => {
       const chronoSpan = ChronoSpan.fromHours(2.49);
-      assertEquals(chronoSpan.milliSeconds, 8964000);
+      assertEquals(chronoSpan.milliseconds, 8964000);
       assertEquals(chronoSpan.seconds, 8964);
       assertEquals(chronoSpan.minutes, 149);
       assertEquals(chronoSpan.hours, 2);

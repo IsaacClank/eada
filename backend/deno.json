@@ -1,8 +1,8 @@
 {
   "tasks": {
     "dev": "deno run --env-file --allow-net --allow-read --allow-write --allow-env --watch src/main.ts",
-    "test": "deno test --allow-env",
-    "test:watch": "deno test --allow-env --watch"
+    "test": "deno test --env-file=.env.test --allow-read --allow-write --allow-env --coverage",
+    "test:watch": "deno task test -- --watch"
   },
   "imports": {
     "@oak/oak": "jsr:@oak/oak@^17.1.6",
