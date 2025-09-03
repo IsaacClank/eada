@@ -12,7 +12,11 @@ export class Chrono {
     this.date = date ?? new Date();
   }
 
-  static from(date: Date) {
+  static from(date: Date | string): Chrono {
+    if (typeof date === "string") {
+      return Chrono.fromMillis(Date.parse(date));
+    }
+
     return new Chrono(date);
   }
 

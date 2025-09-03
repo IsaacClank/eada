@@ -9,10 +9,6 @@ import {
 import assert from "node:assert";
 
 describe("Chrono", () => {
-  beforeAll(() => {
-    Deno.env.set("TZ", "Asia/Ho_Chi_Minh");
-  });
-
   describe("can be instantiated", () => {
     it("from current datetime", () => {
       const expected = new Date();
@@ -32,6 +28,13 @@ describe("Chrono", () => {
       const expected = new Date(timestamp);
       const actual = Chrono.fromMillis(timestamp);
       assertEquals(actual.millis(), expected.getTime());
+    });
+
+    it("from arbitrary datetime string", () => {
+      const datetimeStr = "2025-01-01T07:00:00+0700";
+      const expected = Date.parse(datetimeStr);
+      const actual = Chrono.from(datetimeStr);
+      assertEquals(actual.millis(), expected);
     });
   });
 
