@@ -1,5 +1,5 @@
 import { assertEquals } from "@std/assert";
-import { beforeAll, describe, it } from "@std/testing/bdd";
+import { describe, it } from "@std/testing/bdd";
 import {
   Chrono,
   ChronoFormat,
@@ -118,6 +118,39 @@ describe("Chrono", () => {
     });
   });
 
+  describe("add()", () => {
+    it("should return a clone with added or subtracted duration", () => {
+      const cases: [Chrono, Chrono][] = [
+        [
+          Chrono.from("2025-01-01").add(ChronoSpan.fromDays(2)),
+          Chrono.from("2025-01-03"),
+        ],
+      ];
+
+      cases.forEach((entry) => {
+        const [actual, expected] = entry;
+        assertEquals(actual.millis(), expected.millis());
+      });
+    });
+  });
+
+  describe("subtract()", () => {
+    it("should return a clone with added or subtracted duration", () => {
+      const cases: [Chrono, Chrono][] = [
+        [
+          Chrono.from("2025-01-01T00:00:00+0700")
+            .subtract(ChronoSpan.fromHours(2)),
+          Chrono.from("2024-12-31T22:00:00+0700"),
+        ],
+      ];
+
+      cases.forEach((entry) => {
+        const [actual, expected] = entry;
+        assertEquals(actual.toString(), expected.toString());
+      });
+    });
+  });
+
   describe("toString()", () => {
     it("should display datetime using the basic format", () => {
       const now = new Date();
@@ -142,59 +175,83 @@ describe("ChronoSpan", () => {
     it("should instantiate from milliseconds", () => {
       const chronoSpan = ChronoSpan.fromMilliseconds(500);
       assertEquals(chronoSpan.milliseconds, 500);
-      assertEquals(chronoSpan.seconds, 0);
-      assertEquals(chronoSpan.minutes, 0);
-      assertEquals(chronoSpan.hours, 0);
+      assertEquals(chronoSpan.seconds, 500 / 1000);
+      assertEquals(chronoSpan.minutes, 500 / 1000 / 60);
+      assertEquals(chronoSpan.hours, 500 / 1000 / 60 / 60);
+      assertEquals(chronoSpan.days, 500 / 1000 / 60 / 60 / 24);
     });
   });
 
   describe("fromSeconds()", () => {
     it("should instantiate from seconds", () => {
       const chronoSpan = ChronoSpan.fromSeconds(30.5);
-      assertEquals(chronoSpan.milliseconds, 30500);
-      assertEquals(chronoSpan.seconds, 30);
-      assertEquals(chronoSpan.minutes, 0);
-      assertEquals(chronoSpan.hours, 0);
+      assertEquals(chronoSpan.milliseconds, 30.5 * 1000);
+      assertEquals(chronoSpan.seconds, 30.5);
+      assertEquals(chronoSpan.minutes, 30.5 / 60);
+      assertEquals(chronoSpan.hours, 30.5 / 60 / 60);
+      assertEquals(chronoSpan.days, 30.5 / 60 / 60 / 24);
     });
   });
 
   describe("fromMinutes()", () => {
     it("should instantiate from minutes", () => {
       const chronoSpan = ChronoSpan.fromMinutes(30.59);
-      assertEquals(chronoSpan.milliseconds, 1835400);
-      assertEquals(chronoSpan.seconds, 1835);
-      assertEquals(chronoSpan.minutes, 30);
-      assertEquals(chronoSpan.hours, 0);
+      assertEquals(chronoSpan.milliseconds, 30.59 * 60 * 1000);
+      assertEquals(chronoSpan.seconds, 30.59 * 60);
+      assertEquals(chronoSpan.minutes, 30.59);
+      assertEquals(chronoSpan.hours, 30.59 / 60);
+      assertEquals(chronoSpan.days, 30.59 / 60 / 24);
     });
   });
 
   describe("fromHours()", () => {
     it("should instantiate from hours", () => {
       const chronoSpan = ChronoSpan.fromHours(2.49);
-      assertEquals(chronoSpan.milliseconds, 8964000);
-      assertEquals(chronoSpan.seconds, 8964);
-      assertEquals(chronoSpan.minutes, 149);
-      assertEquals(chronoSpan.hours, 2);
+      assertEquals(chronoSpan.milliseconds, 2.49 * 60 * 60 * 1000);
+      assertEquals(chronoSpan.seconds, 2.49 * 60 * 60);
+      assertEquals(chronoSpan.minutes, 2.49 * 60);
+      assertEquals(chronoSpan.hours, 2.49);
+      assertEquals(chronoSpan.days, 2.49 / 24);
+    });
+  });
+
+  describe("fromDays()", () => {
+    it("should instantiate from days", () => {
+      const chronoSpan = ChronoSpan.fromDays(1.5);
+      assertEquals(chronoSpan.milliseconds, 1.5 * 24 * 60 * 60 * 1000);
+      assertEquals(chronoSpan.seconds, 1.5 * 24 * 60 * 60);
+      assertEquals(chronoSpan.minutes, 1.5 * 24 * 60);
+      assertEquals(chronoSpan.hours, 1.5 * 24);
+      assertEquals(chronoSpan.days, 1.5);
     });
   });
 
   describe("toString()", () => {
     it("should dislay timespan using the basic format", () => {
-      assertEquals(
-        ChronoSpan.fromHours(0).toString(ChronoSpanFormat.Basic),
-        "00:00:00.000",
-      );
+      const cases: [ChronoSpan, string][] = [
+        [ChronoSpan.fromDays(0), "0.00:00:00.000"],
+        [ChronoSpan.fromDays(7), "7.00:00:00.000"],
+        [ChronoSpan.fromDays(1.5), "1.12:00:00.000"],
+        [ChronoSpan.fromHours(25), "1.01:00:00.000"],
+        [ChronoSpan.fromHours(7), "0.07:00:00.000"],
+        [ChronoSpan.fromHours(5.5), "0.05:30:00.000"],
+        [ChronoSpan.fromMinutes(61), "0.01:01:00.000"],
+        [ChronoSpan.fromMinutes(30), "0.00:30:00.000"],
+        [ChronoSpan.fromMinutes(20.5), "0.00:20:30.000"],
+        [ChronoSpan.fromSeconds(7), "0.00:00:07.000"],
+        [ChronoSpan.fromMilliseconds(7), "0.00:00:00.007"],
+      ];
 
-      assertEquals(
-        ChronoSpan.fromHours(2.25).toString(ChronoSpanFormat.Basic),
-        "02:15:00.000",
-      );
+      cases.forEach((entry) => {
+        const [actual, expected] = entry;
+        assertEquals(actual.toString(ChronoSpanFormat.Basic), expected);
+      });
     });
 
     it("should dislay timespan using the TimeZone format", () => {
       assertEquals(
-        ChronoSpan.fromHours(0).toString(ChronoSpanFormat.Basic),
-        "00:00:00.000",
+        ChronoSpan.fromHours(0).toString(ChronoSpanFormat.TimeZone),
+        "+0000",
       );
 
       assertEquals(

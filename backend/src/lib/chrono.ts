@@ -1,4 +1,13 @@
-export type ChronoUnit = "Year" | "Month" | "Day";
+import { ifNaNThen } from "./common.ts";
+
+export type ChronoUnit =
+  | "Year"
+  | "Month"
+  | "Day"
+  | "Hour"
+  | "Minute"
+  | "Second"
+  | "Milliseconds";
 
 export enum ChronoFormat {
   Basic,
@@ -35,64 +44,29 @@ export class Chrono {
   year() {
     return this.date.getFullYear();
   }
-  setYear(value: number) {
-    const clone = Chrono.from(this.date);
-    clone.date.setFullYear(value);
-    return clone;
-  }
 
   month() {
     return this.date.getMonth();
-  }
-  setMonth(value: number) {
-    const clone = Chrono.from(this.date);
-    clone.date.setMonth(value);
-    return clone;
   }
 
   day() {
     return this.date.getDate();
   }
-  setDay(value: number) {
-    const clone = Chrono.from(this.date);
-    clone.date.setDate(value);
-    return clone;
-  }
 
   hours() {
     return this.date.getHours();
-  }
-  setHours(value: number) {
-    const clone = Chrono.from(this.date);
-    clone.date.setHours(value);
-    return clone;
   }
 
   minutes() {
     return this.date.getMinutes();
   }
-  setMinutes(value: number) {
-    const clone = Chrono.from(this.date);
-    clone.date.setMinutes(value);
-    return clone;
-  }
 
   seconds() {
     return this.date.getSeconds();
   }
-  setSeconds(value: number) {
-    const clone = Chrono.from(this.date);
-    clone.date.setSeconds(value);
-    return clone;
-  }
 
   milliseconds() {
     return this.date.getMilliseconds();
-  }
-  setMilliseconds(value: number) {
-    const clone = Chrono.from(this.date);
-    clone.date.setMilliseconds(value);
-    return clone;
   }
 
   unix(): number {
@@ -122,7 +96,15 @@ export class Chrono {
       );
     }
 
-    throw new Error(`Unexpected Chrono unit: ${p}`);
+    throw new Error(`Unsupported Chrono unit: ${p}`);
+  }
+
+  add(span: ChronoSpan): Chrono {
+    return Chrono.fromMillis(this.millis() + span.milliseconds);
+  }
+
+  subtract(span: ChronoSpan): Chrono {
+    return Chrono.fromMillis(this.millis() - span.milliseconds);
   }
 
   toString(format: ChronoFormat = ChronoFormat.Iso8061) {
@@ -159,6 +141,7 @@ export enum ChronoSpanFormat {
 
 export class ChronoSpan {
   isNegative: boolean = true;
+  days!: number;
   hours!: number;
   minutes!: number;
   seconds!: number;
@@ -172,9 +155,10 @@ export class ChronoSpan {
 
     timespan.isNegative = ms < 0;
     timespan.milliseconds = abs;
-    timespan.seconds = Math.floor(abs / 1000);
-    timespan.minutes = Math.floor(abs / 1000 / 60);
-    timespan.hours = Math.floor(abs / 1000 / 60 / 60);
+    timespan.seconds = abs / 1000;
+    timespan.minutes = abs / 1000 / 60;
+    timespan.hours = abs / 1000 / 60 / 60;
+    timespan.days = abs / 1000 / 60 / 60 / 24;
 
     return timespan;
   }
@@ -191,27 +175,38 @@ export class ChronoSpan {
     return ChronoSpan.fromMilliseconds(hours * 60 * 60 * 1000);
   }
 
+  static fromDays(days: number) {
+    return ChronoSpan.fromMilliseconds(days * 24 * 60 * 60 * 1000);
+  }
+
   toString(format: ChronoSpanFormat) {
-    const hours = this.hours;
+    const days = Math.floor(this.days);
+    const hours = ifNaNThen(this.hours % (days * 24), Math.floor(this.hours));
+    const minutes = ifNaNThen(
+      this.minutes % ((days * 24 * 60) + (hours * 60)),
+      Math.floor(this.minutes),
+    );
+    const seconds = ifNaNThen(
+      this.seconds
+        % (((days * 24 + hours) * 60 + minutes) * 60),
+      Math.floor(this.seconds),
+    );
+    const milliseconds = ifNaNThen(
+      this.milliseconds
+        % ((((days * 24 + hours) * 60 + minutes) * 60 + seconds) * 1000),
+      Math.floor(this.milliseconds),
+    );
 
-    let minutes = this.minutes % (this.hours * 60);
-    minutes = isNaN(minutes) ? 0 : minutes;
-
-    let seconds = this.seconds % (this.minutes * 60);
-    seconds = isNaN(seconds) ? 0 : seconds;
-
-    let milliSeconds = this.milliseconds % (this.seconds * 1000);
-    milliSeconds = isNaN(milliSeconds) ? 0 : milliSeconds;
-
+    const daysStr = days.toString();
     const hoursStr = hours.toString().padStart(2, "0");
     const minutesStr = minutes.toString().padStart(2, "0");
     const secondsStr = seconds.toString().padStart(2, "0");
-    const milliSecondsStr = milliSeconds.toString().padStart(3, "0");
+    const milliSecondsStr = milliseconds.toString().padStart(3, "0");
 
     if (format === ChronoSpanFormat.TimeZone) {
       return `${this.isNegative ? "-" : "+"}${hoursStr}${minutesStr}`;
     }
 
-    return `${hoursStr}:${minutesStr}:${secondsStr}.${milliSecondsStr}`;
+    return `${daysStr}.${hoursStr}:${minutesStr}:${secondsStr}.${milliSecondsStr}`;
   }
 }
