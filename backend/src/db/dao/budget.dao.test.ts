@@ -1,19 +1,23 @@
 import { assertEquals } from "@std/assert/equals";
 import { assertExists } from "@std/assert/exists";
-import { afterAll, beforeAll, describe, it } from "@std/testing/bdd";
-
+import { afterEach, beforeEach, describe, it } from "@std/testing/bdd";
 import { Config } from "../../config.ts";
 import { Chrono } from "../../lib/chrono.ts";
-
 import { applyDbMigrations } from "../migration.ts";
-
-import { BudgetDao } from "./budget.ts";
+import { BudgetDao } from "./budget.dao.ts";
+import { Budget } from "../entities.ts";
 
 describe("BudgetDao", () => {
   const dao = new BudgetDao();
 
-  beforeAll(async () => {
+  beforeEach(async () => {
     await applyDbMigrations();
+  });
+
+  afterEach(async () => {
+    const rawDbPath = Deno.env.get(Config.DbPath)!;
+    const parsedDbPath = rawDbPath.replaceAll("~", Deno.env.get("HOME")!);
+    await Deno.remove(parsedDbPath);
   });
 
   describe("upsert()", () => {
@@ -54,9 +58,30 @@ describe("BudgetDao", () => {
     });
   });
 
-  afterAll(async () => {
-    const rawDbPath = Deno.env.get(Config.DbPath)!;
-    const parsedDbPath = rawDbPath.replaceAll("~", Deno.env.get("HOME")!);
-    await Deno.remove(parsedDbPath);
+  describe("getByPeriodAsOf()", () => {
+    describe("when no record exists and active at the given datetime", () => {
+      it("should return null", () => {
+        assertEquals(dao.getByPeriodAsOf(Chrono.now()), null);
+      });
+    });
+
+    describe("when an existing budget is active at the given datetime", () => {
+      it("should return the budget", () => {
+        const expected: Budget = {
+          id: crypto.randomUUID(),
+          periodStart: Chrono.from("2025-01-01"),
+          periodEnd: Chrono.from("2025-02-01"),
+          expectedIncome: 100,
+          expectedExpense: 60,
+          expectedUtilization: 30,
+          expectedSurplus: 10,
+        };
+        dao.upsert(expected);
+
+        const actual = dao.getByPeriodAsOf(Chrono.from("2025-01-15"));
+        assertExists(actual);
+        assertEquals(actual.id, expected.id);
+      });
+    });
   });
 });
