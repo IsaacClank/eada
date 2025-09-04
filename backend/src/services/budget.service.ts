@@ -1,5 +1,6 @@
 import { BudgetDao } from "../db/dao/budget.ts";
 import { Chrono } from "../lib/chrono.ts";
+import { Exception } from "../lib/exception.ts";
 
 export interface UpsertBudget {
   id?: string;
@@ -15,7 +16,26 @@ export interface UpsertBudgetResult extends UpsertBudget {
   id: string;
 }
 
-export function upsertBudget(data: UpsertBudget) {
+export class InvalidBudgetException extends Exception {
+  constructor(cause?: string) {
+    super("InvalidBudget", cause);
+  }
+}
+
+/**
+ * @throw InvalidBudgetException
+ */
+export function upsertBudget(data: UpsertBudget): UpsertBudgetResult {
+  if (
+    data.expectedExpense
+        + data.expectedUtilization
+        + data.expectedSurplus != data.expectedIncome
+  ) {
+    throw new InvalidBudgetException(
+      "Expected expense, utilization and surplus do not add up to expected income",
+    );
+  }
+
   const budget = new BudgetDao().upsert({
     ...data,
     id: data.id ?? crypto.randomUUID(),

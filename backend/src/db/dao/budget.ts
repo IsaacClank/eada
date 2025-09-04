@@ -58,6 +58,9 @@ export class BudgetDao {
     return this.getById(data.id);
   }
 
+  /**
+   * @throw RecordNotFoundException
+   */
   getById(id: string): Budget {
     const result = getDbConnection()
       .prepare(`SELECT * FROM ${TABLE_NAME} WHERE id = ?`)

@@ -1,28 +1,31 @@
-import { afterEach, describe, it } from "@std/testing/bdd";
-import { assertSpyCalls, spy, Stub, stub } from "@std/testing/mock";
-
+import {
+  assertEquals,
+  assertIsError,
+  assertNotEquals,
+  assertThrows,
+} from "@std/assert";
+import { afterEach, beforeEach, describe, it } from "@std/testing/bdd";
+import { assertSpyCalls, SpyLike, stub } from "@std/testing/mock";
 import { BudgetDao } from "../db/dao/budget.ts";
-import { Budget } from "../db/entities.ts";
-
-import { UpsertBudget, upsertBudget } from "./budget.service.ts";
-import { assertNotEquals } from "@std/assert";
+import {
+  InvalidBudgetException,
+  UpsertBudget,
+  upsertBudget,
+} from "./budget.service.ts";
 
 describe("upsertBudget()", () => {
-  describe("should call BudgetDao.upsert", () => {
-    let daoStub: Stub<BudgetDao, [data: Budget], Budget>;
+  let daoUpsertStub: SpyLike;
 
-    afterEach(() => {
-      if (daoStub != null) {
-        daoStub.restore();
-      }
-    });
+  beforeEach(() => {
+    daoUpsertStub = stub(BudgetDao.prototype, "upsert", (data) => data);
+  });
 
-    it("with given id if specified", () => {
-      daoStub = stub(
-        BudgetDao.prototype,
-        "upsert",
-        spy((data) => data),
-      );
+  afterEach(() => {
+    daoUpsertStub.restore();
+  });
+
+  describe("when id is specified", () => {
+    it("should call BudgetDao.upsert with specified id", () => {
       const budgetData: UpsertBudget = {
         id: crypto.randomUUID(),
         periodStart: "2025-01-01T07:00:00+0700",
@@ -32,20 +35,14 @@ describe("upsertBudget()", () => {
         expectedUtilization: 30,
         expectedSurplus: 20,
       };
-      upsertBudget(budgetData);
-      assertSpyCalls(daoStub, 1);
+      const actual = upsertBudget(budgetData);
+      assertSpyCalls(daoUpsertStub, 1);
+      assertEquals(actual.id, budgetData.id);
     });
+  });
 
-    it("with generated id if none was specified", () => {
-      let generatedId = "";
-      daoStub = stub(
-        BudgetDao.prototype,
-        "upsert",
-        spy((data) => {
-          generatedId = data.id;
-          return data;
-        }),
-      );
+  describe("when id is not specified", () => {
+    it("should call BudgetDao.upsert with a generated id", () => {
       const budgetData: UpsertBudget = {
         periodStart: "2025-01-01T07:00:00+0700",
         periodEnd: "2025-02-01T07:00:00+0700",
@@ -54,9 +51,26 @@ describe("upsertBudget()", () => {
         expectedUtilization: 30,
         expectedSurplus: 20,
       };
-      upsertBudget(budgetData);
-      assertSpyCalls(daoStub, 1);
-      assertNotEquals(generatedId, "");
+      const actual = upsertBudget(budgetData);
+      assertSpyCalls(daoUpsertStub, 1);
+      assertNotEquals(actual.id, "");
+    });
+  });
+
+  describe("when expected_expense + expected_utilization + expected_suplus != expected_income", () => {
+    it("should throw InvalidBudgetException", () => {
+      const actualError = assertThrows(
+        () =>
+          upsertBudget({
+            periodStart: "2025-01-01",
+            periodEnd: "2025-02-01",
+            expectedIncome: 100,
+            expectedExpense: 60,
+            expectedUtilization: 30,
+            expectedSurplus: 20,
+          }),
+      );
+      assertIsError(actualError, InvalidBudgetException);
     });
   });
 });

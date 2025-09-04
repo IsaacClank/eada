@@ -2,7 +2,11 @@ import { Router } from "@oak/oak/router";
 import { Application } from "@oak/oak/application";
 import { Logger } from "./lib/logger.ts";
 import { isHttpError } from "jsr:@oak/commons@1/http_errors";
-import { upsertBudget } from "./services/budget.service.ts";
+import {
+  InvalidBudgetException,
+  upsertBudget,
+} from "./services/budget.service.ts";
+import { Status } from "jsr:@oak/commons@1/status";
 
 export const server = new Application();
 
@@ -18,20 +22,17 @@ server.use(async ({ response: res }, next) => {
   try {
     await next();
   } catch (ex) {
-    if (isHttpError(ex)) {
-      res.status = ex.status;
-      res.body = {
-        error: ex.message,
-        details: ex.cause,
-        stacktrace: ex.stack,
-      };
-    } else {
-      res.status = 500;
-      res.body = {
-        error: "UnexpectedError",
-        details: ex,
-      };
-    }
+    const status = isHttpError(ex) ? ex.status : Status.InternalServerError;
+    const code = isHttpError(ex) ? ex.message : null;
+    const details = isHttpError(ex) ? ex.cause : null;
+    const stack = isHttpError(ex) ? ex.stack : null;
+
+    res.status = status;
+    res.body = {
+      error: code,
+      details,
+      stack,
+    };
   }
 });
 
@@ -39,10 +40,22 @@ server.use(async ({ response: res }, next) => {
 const router = new Router();
 
 router.get("/health", ({ response: res }) => (res.status = 200));
-router.post("/budget", async (ctx) => {
-  const { request: req, response: res } = ctx;
-  const reqBody = await req.body.json();
-  res.body = upsertBudget(reqBody);
+router.post("/budget", async (c) => {
+  try {
+    const reqBody = await c.request.body.json();
+    c.response.body = upsertBudget(reqBody);
+  } catch (ex) {
+    Logger.err(ex);
+    if (ex instanceof InvalidBudgetException) {
+      c.throw(Status.Conflict, ex.message, {
+        cause: ex.cause,
+        stack: ex.stack,
+      });
+    }
+    c.throw(Status.InternalServerError, "UnexpectedException", {
+      cause: ex,
+    });
+  }
 });
 
 server.use(router.routes());
