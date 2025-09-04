@@ -1,9 +1,8 @@
-export class Exception extends Error {
-  constructor(message: string, cause?: string) {
-    super(message, { cause });
-  }
+import { ErrorStatus } from "@oak/common/status";
+import { HttpError } from "@oak/common/http_errors";
 
-  override toString() {
-    return `${this.message}: ${this.cause}`;
+export class HttpException<T extends ErrorStatus> extends HttpError<T> {
+  constructor(errorCode: string, cause?: string) {
+    super(errorCode, { cause });
   }
 }

@@ -1,10 +1,10 @@
 import { describe, it } from "node:test";
-import { Exception } from "./exception.ts";
+import { HttpException } from "./exception.ts";
 import { assertIsError } from "@std/assert";
 
 describe("Exception", () => {
   it("can be instantiated", () => {
-    const ex = new Exception("Something unexpected happened");
-    assertIsError(ex, Exception);
+    const ex = new HttpException("Something unexpected happened");
+    assertIsError(ex, HttpException);
   });
 });

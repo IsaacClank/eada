@@ -1,6 +1,7 @@
+import { Status } from "@oak/common/status";
 import { BudgetDao } from "../db/dao/budget.dao.ts";
 import { Chrono } from "../lib/chrono.ts";
-import { Exception } from "../lib/exception.ts";
+import { HttpException } from "../lib/exception.ts";
 
 export interface UpsertBudget {
   id?: string;
@@ -22,14 +23,13 @@ export interface BudgetResult {
   expectedSurplus: number;
 }
 
-export class InvalidBudgetException extends Exception {
-  constructor(cause?: string) {
-    super("InvalidBudget", cause);
-  }
+enum ErrorCode {
+  InvalidBudgetState = "InvalidBudgetState",
+  BudgetNotFound = "BudgetNotFound",
 }
 
 /**
- * @throw InvalidBudgetException
+ * @throw HttpException<Status.Conflict>
  */
 export function upsertBudget(data: UpsertBudget): BudgetResult {
   if (
@@ -37,7 +37,8 @@ export function upsertBudget(data: UpsertBudget): BudgetResult {
         + data.expectedUtilization
         + data.expectedSurplus != data.expectedIncome
   ) {
-    throw new InvalidBudgetException(
+    throw new HttpException<Status.Conflict>(
+      ErrorCode.InvalidBudgetState.toString(),
       "Expected expense, utilization and surplus do not add up to expected income",
     );
   }
@@ -57,13 +58,14 @@ export function upsertBudget(data: UpsertBudget): BudgetResult {
 }
 
 /**
- * @throw InvalidBudgetException
+ * @throw HttpException<Status.NotFound>
  */
 export function getBudgetAsOf(asOf: Chrono): BudgetResult {
   const budget = new BudgetDao().getByPeriodAsOf(asOf);
 
   if (budget == null) {
-    throw new InvalidBudgetException(
+    throw new HttpException<Status.NotFound>(
+      ErrorCode.BudgetNotFound.toString(),
       "No active budget found for the given datetime",
     );
   }

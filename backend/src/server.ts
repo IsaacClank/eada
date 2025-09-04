@@ -2,15 +2,10 @@ import { Router } from "@oak/oak/router";
 import { Application } from "@oak/oak/application";
 import { Logger } from "./lib/logger.ts";
 import { isHttpError } from "jsr:@oak/commons@1/http_errors";
-import {
-  getBudgetAsOf,
-  InvalidBudgetException,
-  upsertBudget,
-} from "./services/budget.service.ts";
+import { getBudgetAsOf, upsertBudget } from "./services/budget.service.ts";
 import { Status } from "jsr:@oak/commons@1/status";
 import { Chrono } from "./lib/chrono.ts";
 import { Context } from "@oak/oak/context";
-import { Exception } from "./lib/exception.ts";
 
 export const server = new Application();
 
@@ -38,19 +33,9 @@ server.use(async ({ response: res }, next) => {
       stack = ex.stack;
     }
 
-    if (ex instanceof Exception) {
-      code = ex.message;
-      details = ex.cause;
-      stack = ex.stack;
-    }
-
-    if (ex instanceof InvalidBudgetException) {
-      status = Status.Conflict;
-    }
-
     res.status = status;
     res.body = {
-      error: code,
+      code,
       details,
       stack,
     };

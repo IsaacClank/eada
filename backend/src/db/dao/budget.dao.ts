@@ -1,13 +1,12 @@
 import { SQLOutputValue } from "node:sqlite";
 import { Chrono } from "../../lib/chrono.ts";
 import { Dict } from "../../lib/dictionary.ts";
-import { Exception } from "../../lib/exception.ts";
 import { getDbConnection } from "../connection.ts";
 import { Budget } from "../entities.ts";
 
-export class RecordNotFoundException extends Exception {
+export class RecordNotFoundException extends Error {
   constructor(cause?: string) {
-    super("RecordNotFound", cause);
+    super("RecordNotFound", { cause });
   }
 }
 
@@ -75,11 +74,13 @@ export class BudgetDao {
 
   getByPeriodAsOf(asOf: Chrono): Budget | null {
     const result = getDbConnection()
-      .prepare(`
+      .prepare(
+        `
         SELECT *
         FROM ${TABLE_NAME}
         WHERE period_start <= ? AND ? < period_end
-      `)
+      `,
+      )
       .get(asOf.unix(), asOf.unix());
 
     return result ? this.createEntityFromDbOutput(result) : null;

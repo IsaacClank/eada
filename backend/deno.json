@@ -17,6 +17,7 @@
     "test:watch": "deno test --env-file=.env.test --allow-read --allow-write --allow-env --watch"
   },
   "imports": {
+    "@oak/common": "jsr:@oak/commons@^1.0.1",
     "@oak/oak": "jsr:@oak/oak@^17.1.6",
     "@std/assert": "jsr:@std/assert@1",
     "@std/http": "jsr:@std/http@1",
