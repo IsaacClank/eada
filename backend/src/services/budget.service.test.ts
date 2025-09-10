@@ -6,19 +6,18 @@ import {
 } from "@std/assert";
 import { afterEach, beforeEach, describe, it } from "@std/testing/bdd";
 import { assertSpyCalls, SpyLike, stub } from "@std/testing/mock";
-import { BudgetDao } from "../db/dao/budget.dao.ts";
 import { getBudgetAsOf, UpsertBudget, upsertBudget } from "./budget.service.ts";
-import { Budget } from "../db/entities.ts";
 import { Chrono } from "../lib/chrono.ts";
 import { Status } from "@oak/common/status";
 import { HttpException } from "../lib/exception.ts";
+import { Budget } from "../db/models/budget.ts";
 
 describe("budget.service", () => {
   describe("upsertBudget()", () => {
     let daoUpsertStub: SpyLike;
 
     beforeEach(() => {
-      daoUpsertStub = stub(BudgetDao.prototype, "upsert", (data) => data);
+      daoUpsertStub = stub(Budget, "upsert", (...data) => data);
     });
 
     afterEach(() => {
@@ -96,12 +95,7 @@ describe("budget.service", () => {
           expectedUtilization: 30,
           expectedSurplus: 10,
         };
-
-        daoUpsertStub = stub(
-          BudgetDao.prototype,
-          "getByPeriodAsOf",
-          (_asOf) => expected,
-        );
+        daoUpsertStub = stub(Budget, "getActiveAsOf", (_asOf) => [expected]);
 
         const actual = getBudgetAsOf(Chrono.from("2025-01-15"));
 
@@ -112,11 +106,7 @@ describe("budget.service", () => {
 
     describe("when budget does not exists", () => {
       it("should throw", () => {
-        daoUpsertStub = stub(
-          BudgetDao.prototype,
-          "getByPeriodAsOf",
-          (_asOf) => null,
-        );
+        daoUpsertStub = stub(Budget, "getActiveAsOf", (_asOf) => []);
 
         const actual = assertThrows(() =>
           getBudgetAsOf(Chrono.from("2025-01-15"))
