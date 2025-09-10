@@ -10,22 +10,30 @@ export class RecordNotFoundException extends Error {
   }
 }
 
-const TABLE_NAME = "budget";
-const ATTRIBUTE_TO_COLUMN = new Dict<string, string>([
-  ["id", "id"],
-  ["periodStart", "period_start"],
-  ["periodEnd", "period_end"],
-  ["expectedIncome", "expected_income"],
-  ["expectedExpense", "expected_expense"],
-  ["expectedUtilization", "expected_utilization"],
-  ["expectedSurplus", "expected_surplus"],
-]);
-
 export class BudgetDao {
+  static readonly Table = "budget";
+  static readonly Attributes = new Dict<string, string>([
+    ["id", "id"],
+    ["periodStart", "period_start"],
+    ["periodEnd", "period_end"],
+    ["expectedIncome", "expected_income"],
+    ["expectedExpense", "expected_expense"],
+    ["expectedUtilization", "expected_utilization"],
+    ["expectedSurplus", "expected_surplus"],
+  ]);
+
+  table() {
+    return BudgetDao.Table;
+  }
+
+  column(attribute: string) {
+    return BudgetDao.Attributes.getValue(attribute);
+  }
+
   upsert(data: Budget): Budget {
     const db = getDbConnection();
     const insert = db.prepare(`
-      INSERT INTO ${TABLE_NAME}
+      INSERT INTO ${this.table()}
         (
           id, period_start, period_end,
           expected_income, expected_expense,
@@ -60,7 +68,7 @@ export class BudgetDao {
    */
   getById(id: string): Budget {
     const result = getDbConnection()
-      .prepare(`SELECT * FROM ${TABLE_NAME} WHERE id = ?`)
+      .prepare(`SELECT * FROM ${this.table()} WHERE id = ?`)
       .get(id);
 
     if (result == null) {
@@ -74,13 +82,11 @@ export class BudgetDao {
 
   getByPeriodAsOf(asOf: Chrono): Budget | null {
     const result = getDbConnection()
-      .prepare(
-        `
+      .prepare(`
         SELECT *
-        FROM ${TABLE_NAME}
+        FROM ${this.table()}
         WHERE period_start <= ? AND ? < period_end
-      `,
-      )
+      `)
       .get(asOf.unix(), asOf.unix());
 
     return result ? this.createEntityFromDbOutput(result) : null;
@@ -90,26 +96,26 @@ export class BudgetDao {
     output: Record<string, SQLOutputValue>,
   ): Budget {
     return {
-      id: String(output[ATTRIBUTE_TO_COLUMN.getValue("id")]),
+      id: String(output[this.column("id")]),
 
-      periodStart: Chrono.fromUnix(
-        Number(output[ATTRIBUTE_TO_COLUMN.getValue("periodStart")]),
-      ),
-      periodEnd: Chrono.fromUnix(
-        Number(output[ATTRIBUTE_TO_COLUMN.getValue("periodEnd")]),
-      ),
+      periodStart: Chrono.fromUnix(Number(
+        output[this.column("periodStart")],
+      )),
+      periodEnd: Chrono.fromUnix(Number(
+        output[this.column("periodEnd")],
+      )),
 
       expectedIncome: Number(
-        output[ATTRIBUTE_TO_COLUMN.getValue("expectedIncome")],
+        output[this.column("expectedIncome")],
       ),
       expectedExpense: Number(
-        output[ATTRIBUTE_TO_COLUMN.getValue("expectedExpense")],
+        output[this.column("expectedExpense")],
       ),
       expectedUtilization: Number(
-        output[ATTRIBUTE_TO_COLUMN.getValue("expectedUtilization")],
+        output[this.column("expectedUtilization")],
       ),
       expectedSurplus: Number(
-        output[ATTRIBUTE_TO_COLUMN.getValue("expectedSurplus")],
+        output[this.column("expectedSurplus")],
       ),
     };
   }
