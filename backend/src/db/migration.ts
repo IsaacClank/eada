@@ -1,7 +1,5 @@
 import { getDbConnection } from "./connection.ts";
 
-export * from "./entities.ts";
-
 export async function applyDbMigrations() {
   const db = getDbConnection();
   const pathToMigrations = `${Deno.cwd()}/migrations`;

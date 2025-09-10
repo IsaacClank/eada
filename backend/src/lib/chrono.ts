@@ -21,9 +21,23 @@ export class Chrono {
     this.date = date ?? new Date();
   }
 
-  static from(date: Date | string): Chrono {
+  static from(
+    date: Date | string | number | bigint | Uint8Array | null,
+  ): Chrono {
     if (typeof date === "string") {
       return Chrono.fromMillis(Date.parse(date));
+    }
+
+    if (
+      typeof date === "number"
+      || typeof date === "bigint"
+      || date instanceof Uint8Array
+    ) {
+      return Chrono.fromUnix(Number(date));
+    }
+
+    if (date === null) {
+      return Chrono.now();
     }
 
     return new Chrono(date);

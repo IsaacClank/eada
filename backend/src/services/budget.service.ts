@@ -1,7 +1,7 @@
 import { Status } from "@oak/common/status";
-import { BudgetDao } from "../db/dao/budget.dao.ts";
 import { Chrono } from "../lib/chrono.ts";
 import { HttpException } from "../lib/exception.ts";
+import { Budget } from "../db/models/budget.ts";
 
 export interface UpsertBudget {
   id?: string;
@@ -43,12 +43,12 @@ export function upsertBudget(data: UpsertBudget): BudgetResult {
     );
   }
 
-  const budget = new BudgetDao().upsert({
+  const budget = Budget.upsert({
     ...data,
     id: data.id ?? crypto.randomUUID(),
     periodStart: Chrono.from(data.periodStart),
     periodEnd: Chrono.from(data.periodEnd),
-  });
+  })[0];
 
   return {
     ...budget,
@@ -61,7 +61,7 @@ export function upsertBudget(data: UpsertBudget): BudgetResult {
  * @throw HttpException<Status.NotFound>
  */
 export function getBudgetAsOf(asOf: Chrono): BudgetResult {
-  const budget = new BudgetDao().getByPeriodAsOf(asOf);
+  const budget = Budget.getActiveAsOf(asOf)[0];
 
   if (budget == null) {
     throw new HttpException<Status.NotFound>(
