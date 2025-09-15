@@ -1,9 +1,9 @@
 import { Router } from "@oak/oak/router";
 import { Application } from "@oak/oak/application";
 import { Logger } from "./lib/logger.ts";
-import { isHttpError } from "jsr:@oak/commons@1/http_errors";
+import { isHttpError } from "@oak/common/http_errors";
 import { getBudgetAsOf, upsertBudget } from "./services/budget.service.ts";
-import { Status } from "jsr:@oak/commons@1/status";
+import { Status } from "@oak/common/status";
 import { Chrono } from "./lib/chrono.ts";
 import { Context } from "@oak/oak/context";
 
