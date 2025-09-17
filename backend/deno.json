@@ -4,15 +4,15 @@
     "default": {
       "net": ["0.0.0.0:3760"],
       "env": ["HOME", "PORT", "DB_PATH"],
-      "read": ["./migrations/", "/home/isaac/.local/share/eada/"],
-      "write": ["/home/isaac/.local/share/eada"]
+      "read": ["./migrations/", "./output/"],
+      "write": ["./output/"]
     }
   },
   "test": {
     "permissions": {
       "env": ["HOME", "PORT", "DB_PATH"],
-      "read": ["./migrations/", "/home/isaac/.local/share/eada/"],
-      "write": ["/home/isaac/.local/share/eada"]
+      "read": ["./migrations/", "./output/"],
+      "write": ["./output/"]
     }
   },
   "tasks": {
