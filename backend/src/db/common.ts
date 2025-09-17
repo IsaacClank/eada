@@ -9,3 +9,9 @@ export class RecordNotFoundException extends Error {
     super("RecordNotFound", { cause });
   }
 }
+
+export class ForeignKeyConstraintException extends Error {
+  constructor(cause?: string) {
+    super("ForeignKeyConstraint", { cause });
+  }
+}

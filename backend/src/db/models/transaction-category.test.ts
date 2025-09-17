@@ -3,8 +3,15 @@ import { applyDbMigrations } from "../migration.ts";
 import { Config } from "../../config.ts";
 import { TransactionCategory } from "./transaction-category.ts";
 import { Chrono } from "../../lib/chrono.ts";
-import { assert, assertArrayIncludes, assertEquals } from "@std/assert";
+import {
+  assert,
+  assertArrayIncludes,
+  assertEquals,
+  assertIsError,
+  assertThrows,
+} from "@std/assert";
 import { Budget } from "./budget.ts";
+import { ForeignKeyConstraintException } from "../common.ts";
 
 describe("TransactionCategory", () => {
   let expectedBudget!: Budget;
@@ -74,6 +81,26 @@ describe("TransactionCategory", () => {
       assertEquals(actualCategories.length, expectedCategories.length);
       assert(actualCategories.every((e) => e.budgetId === expectedBudget.id));
       assertArrayIncludes(actualCategories, expectedCategories);
+    });
+
+    describe("when the specified budget is non-existent", () => {
+      it("should throw", () => {
+        const expectedCategories: TransactionCategory[] = [
+          TransactionCategory.from({
+            id: crypto.randomUUID(),
+            budgetId: crypto.randomUUID(),
+            name: "Salary",
+            type: "Income",
+            rate: 1,
+          }),
+        ];
+
+        const actual = assertThrows(() =>
+          TransactionCategory.upsert(...expectedCategories)
+        );
+
+        assertIsError(actual, ForeignKeyConstraintException);
+      });
     });
   });
 
@@ -152,7 +179,7 @@ describe("TransactionCategory", () => {
   });
 
   describe("deleteByBudgetId", () => {
-    it("", () => {
+    it("should deletes transaction categories belonging to the specified budget", () => {
       const expectedCategories: TransactionCategory[] = [
         TransactionCategory.from({
           id: crypto.randomUUID(),

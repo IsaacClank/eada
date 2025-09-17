@@ -3,6 +3,7 @@ import { Chrono } from "../lib/chrono.ts";
 import { HttpException } from "../lib/exception.ts";
 import { Budget } from "../db/models/budget.ts";
 import { TransactionCategory } from "../db/models/transaction-category.ts";
+import { ForeignKeyConstraintException } from "../db/common.ts";
 
 export interface BudgetResult {
   id: string;
@@ -100,4 +101,55 @@ export function getBudgetAsOf(asOf: Chrono): BudgetResult {
       rate,
     })),
   };
+}
+
+export interface CreateTransactionCategory {
+  name: string;
+  type: string;
+  rate: number;
+}
+
+/**
+ * @throw HttpException<Status.BadRequest>
+ */
+export function replaceTransactionCategories(
+  budgetId: string,
+  categoriesData: CreateTransactionCategory[],
+): BudgetResult {
+  try {
+    TransactionCategory.deleteByBudgetId(budgetId);
+
+    const categories = categoriesData.length
+      ? TransactionCategory.upsert(...categoriesData.map((c) => (
+        {
+          id: crypto.randomUUID(),
+          budgetId,
+          name: c.name,
+          type: c.type,
+          rate: c.rate,
+        }
+      )))
+      : [];
+    const budget = Budget.getByIds(budgetId)[0];
+
+    return {
+      ...budget,
+      periodStart: budget.periodStart.toString(),
+      periodEnd: budget.periodEnd.toString(),
+      categories: categories.map(({ name, type, rate }) => ({
+        name,
+        type,
+        rate,
+      })),
+    };
+  } catch (error) {
+    if (error instanceof ForeignKeyConstraintException) {
+      throw new HttpException<Status.BadRequest>(
+        ErrorCode.InvalidTransactionCategoriesState,
+        "No existing budget can be found with the given ID",
+      );
+    }
+
+    throw error;
+  }
 }

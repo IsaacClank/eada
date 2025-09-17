@@ -8,12 +8,14 @@ import { afterEach, beforeEach, describe, it } from "@std/testing/bdd";
 import {
   assertSpyCallArgs,
   assertSpyCalls,
+  spy,
   SpyLike,
   stub,
 } from "@std/testing/mock";
 import {
   BudgetResult,
   getBudgetAsOf,
+  replaceTransactionCategories,
   UpsertBudget,
   upsertBudget,
 } from "./budget.service.ts";
@@ -22,14 +24,18 @@ import { Status } from "@oak/common/status";
 import { HttpException } from "../lib/exception.ts";
 import { Budget } from "../db/models/budget.ts";
 import { TransactionCategory } from "../db/models/transaction-category.ts";
+import { ForeignKeyConstraintException } from "../db/common.ts";
 
 type BudgetStub = {
   upsert?: SpyLike;
   getActiveAsOf?: SpyLike;
+  getByIds?: SpyLike;
 };
 
 type TransactionCategoryStub = {
   getByBudgetId?: SpyLike;
+  deleteByBudgetId?: SpyLike;
+  upsert?: SpyLike;
 };
 
 describe("budget.service", () => {
@@ -193,6 +199,136 @@ describe("budget.service", () => {
       it("should return budget", () => {
         assertEquals(actual.id, existingBudget.id);
       });
+    });
+  });
+
+  describe("replaceTransactionCategories", () => {
+    const budgetStub: BudgetStub = {};
+    const transactionCategoryStub: TransactionCategoryStub = {};
+
+    const expectedBudget = Budget.from({
+      id: crypto.randomUUID(),
+      periodStart: Chrono.from("2025-01-01"),
+      periodEnd: Chrono.from("2025-01-01"),
+      expectedIncome: 100,
+      expectedExpense: 50,
+      expectedUtilization: 30,
+      expectedSurplus: 20,
+    });
+    const expectedTransactionCategories = [
+      TransactionCategory.from({
+        id: crypto.randomUUID(),
+        budgetId: expectedBudget.id,
+        name: "Salary",
+        type: "Income",
+        rate: 1,
+      }),
+      TransactionCategory.from({
+        id: crypto.randomUUID(),
+        budgetId: expectedBudget.id,
+        name: "All expense",
+        type: "Expense",
+        rate: 1,
+      }),
+      TransactionCategory.from({
+        id: crypto.randomUUID(),
+        budgetId: expectedBudget.id,
+        name: "Investment & Saving",
+        type: "Utilization",
+        rate: 1,
+      }),
+    ];
+
+    beforeEach(() => {
+      budgetStub.getByIds?.restore();
+      budgetStub.getByIds = stub(
+        Budget,
+        "getByIds",
+        (..._) => [expectedBudget],
+      );
+
+      transactionCategoryStub.deleteByBudgetId?.restore();
+      transactionCategoryStub.deleteByBudgetId = stub(
+        TransactionCategory,
+        "deleteByBudgetId",
+        (_) => {},
+      );
+
+      transactionCategoryStub.upsert?.restore();
+      transactionCategoryStub.upsert = stub(
+        TransactionCategory,
+        "upsert",
+        (...data) => {
+          return data;
+        },
+      );
+    });
+
+    it("should call TransactionCategory.deleteByBudgetId", () => {
+      replaceTransactionCategories(expectedBudget.id, []);
+      assertSpyCallArgs(transactionCategoryStub.deleteByBudgetId!, 0, [
+        expectedBudget.id,
+      ]);
+    });
+
+    describe("when no categories are specified", () => {
+      it("should not call TransactionCategory.upsert", () => {
+        replaceTransactionCategories(expectedBudget.id, []);
+        assertSpyCalls(transactionCategoryStub.upsert!, 0);
+      });
+    });
+
+    it("should call TransactionCategory.upsert", () => {
+      replaceTransactionCategories(
+        expectedBudget.id,
+        expectedTransactionCategories,
+      );
+      assertSpyCalls(transactionCategoryStub.upsert!, 1);
+    });
+
+    describe("when using a non-existent budget ID", () => {
+      beforeEach(() => {
+        transactionCategoryStub.deleteByBudgetId?.restore();
+        transactionCategoryStub.deleteByBudgetId = stub(
+          TransactionCategory,
+          "deleteByBudgetId",
+          (_) => {
+            throw new ForeignKeyConstraintException();
+          },
+        );
+      });
+
+      it("should handle exception thrown by TransactionCategory.upsert", () => {
+        const actual = assertThrows(() =>
+          replaceTransactionCategories(expectedBudget.id, [])
+        );
+        assertIsError(actual, HttpException<Status.Conflict>);
+      });
+    });
+
+    it("should call Budget.getByIds", () => {
+      replaceTransactionCategories(expectedBudget.id, []);
+      assertSpyCallArgs(budgetStub.getByIds!, 0, [expectedBudget.id]);
+    });
+
+    it("should return updated budget data", () => {
+      const expected: BudgetResult = {
+        ...expectedBudget,
+        periodStart: expectedBudget.periodStart.toString(),
+        periodEnd: expectedBudget.periodEnd.toString(),
+        categories: expectedTransactionCategories.map((
+          { name, type, rate },
+        ) => ({
+          name,
+          type,
+          rate,
+        })),
+      };
+      const actual = replaceTransactionCategories(
+        expectedBudget.id,
+        expectedTransactionCategories,
+      );
+      assertEquals(actual, expected);
     });
   });
 });

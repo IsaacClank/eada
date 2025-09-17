@@ -2,7 +2,11 @@ import { Router } from "@oak/oak/router";
 import { Application } from "@oak/oak/application";
 import { Logger } from "./lib/logger.ts";
 import { isHttpError } from "@oak/common/http_errors";
-import { getBudgetAsOf, upsertBudget } from "./services/budget.service.ts";
+import {
+  getBudgetAsOf,
+  replaceTransactionCategories,
+  upsertBudget,
+} from "./services/budget.service.ts";
 import { Status } from "@oak/common/status";
 import { Chrono } from "./lib/chrono.ts";
 import { Context } from "@oak/oak/context";
@@ -59,6 +63,12 @@ router.get("/budget", (c: Context) => {
     cause: "missing query parameter asOf",
   });
   c.response.body = getBudgetAsOf(Chrono.from(asOfRaw));
+});
+
+router.put("/budget/:budgetId/category", async (c) => {
+  const budgetId = c.params.budgetId;
+  const data = await c.request.body.json();
+  c.response.body = replaceTransactionCategories(budgetId, data);
 });
 
 server.use(router.routes());
