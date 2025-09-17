@@ -8,7 +8,6 @@ import { afterEach, beforeEach, describe, it } from "@std/testing/bdd";
 import {
   assertSpyCallArgs,
   assertSpyCalls,
-  spy,
   SpyLike,
   stub,
 } from "@std/testing/mock";
