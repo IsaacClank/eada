@@ -2,16 +2,7 @@ import { Status } from "@oak/common/status";
 import { Chrono } from "../lib/chrono.ts";
 import { HttpException } from "../lib/exception.ts";
 import { Budget } from "../db/models/budget.ts";
-
-export interface UpsertBudget {
-  id?: string;
-  periodStart: string;
-  periodEnd: string;
-  expectedIncome: number;
-  expectedExpense: number;
-  expectedUtilization: number;
-  expectedSurplus: number;
-}
+import { TransactionCategory } from "../db/models/transaction-category.ts";
 
 export interface BudgetResult {
   id: string;
@@ -21,11 +12,28 @@ export interface BudgetResult {
   expectedExpense: number;
   expectedUtilization: number;
   expectedSurplus: number;
+  categories: TransactionCategoryResult[];
+}
+export interface TransactionCategoryResult {
+  name: string;
+  type: string;
+  rate: number;
 }
 
 enum ErrorCode {
   InvalidBudgetState = "InvalidBudgetState",
   BudgetNotFound = "BudgetNotFound",
+  InvalidTransactionCategoriesState = "InvalidTransactionCategoriesState",
+}
+
+export interface UpsertBudget {
+  id?: string;
+  periodStart: string;
+  periodEnd: string;
+  expectedIncome: number;
+  expectedExpense: number;
+  expectedUtilization: number;
+  expectedSurplus: number;
 }
 
 /**
@@ -49,11 +57,19 @@ export function upsertBudget(data: UpsertBudget): BudgetResult {
     periodStart: Chrono.from(data.periodStart),
     periodEnd: Chrono.from(data.periodEnd),
   })[0];
+  const budgetTransactionCategories = TransactionCategory.getByBudgetId(
+    budget.id,
+  );
 
   return {
     ...budget,
     periodStart: budget.periodStart.toString(),
     periodEnd: budget.periodEnd.toString(),
+    categories: budgetTransactionCategories.map(({ name, type, rate }) => ({
+      name,
+      type,
+      rate,
+    })),
   };
 }
 
@@ -61,18 +77,27 @@ export function upsertBudget(data: UpsertBudget): BudgetResult {
  * @throw HttpException<Status.NotFound>
  */
 export function getBudgetAsOf(asOf: Chrono): BudgetResult {
-  const budget = Budget.getActiveAsOf(asOf)[0];
-
-  if (budget == null) {
+  const budgets = Budget.getActiveAsOf(asOf);
+  if (budgets.length === 0) {
     throw new HttpException<Status.NotFound>(
       ErrorCode.BudgetNotFound.toString(),
       "No active budget found for the given datetime",
     );
   }
 
+  const budget = budgets[0];
+  const budgetTransactionCategories = TransactionCategory.getByBudgetId(
+    budget.id,
+  );
+
   return {
     ...budget,
     periodStart: budget.periodStart.toString(),
     periodEnd: budget.periodEnd.toString(),
+    categories: budgetTransactionCategories.map(({ name, type, rate }) => ({
+      name,
+      type,
+      rate,
+    })),
   };
 }

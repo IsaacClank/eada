@@ -5,56 +5,50 @@ import {
   assertThrows,
 } from "@std/assert";
 import { afterEach, beforeEach, describe, it } from "@std/testing/bdd";
-import { assertSpyCalls, SpyLike, stub } from "@std/testing/mock";
-import { getBudgetAsOf, UpsertBudget, upsertBudget } from "./budget.service.ts";
+import {
+  assertSpyCallArgs,
+  assertSpyCalls,
+  SpyLike,
+  stub,
+} from "@std/testing/mock";
+import {
+  BudgetResult,
+  getBudgetAsOf,
+  UpsertBudget,
+  upsertBudget,
+} from "./budget.service.ts";
 import { Chrono } from "../lib/chrono.ts";
 import { Status } from "@oak/common/status";
 import { HttpException } from "../lib/exception.ts";
 import { Budget } from "../db/models/budget.ts";
+import { TransactionCategory } from "../db/models/transaction-category.ts";
+
+type BudgetStub = {
+  upsert?: SpyLike;
+  getActiveAsOf?: SpyLike;
+};
+
+type TransactionCategoryStub = {
+  getByBudgetId?: SpyLike;
+};
 
 describe("budget.service", () => {
-  describe("upsertBudget()", () => {
-    let daoUpsertStub: SpyLike;
+  describe("upsertBudget", () => {
+    const budgetStub: BudgetStub = {};
+    const transactionCategoryStub: TransactionCategoryStub = {};
 
     beforeEach(() => {
-      daoUpsertStub = stub(Budget, "upsert", (...data) => data);
+      budgetStub.upsert = stub(Budget, "upsert", (...data) => data);
+      transactionCategoryStub.getByBudgetId = stub(
+        TransactionCategory,
+        "getByBudgetId",
+        (_) => [],
+      );
     });
 
     afterEach(() => {
-      daoUpsertStub.restore();
-    });
-
-    describe("when id is specified", () => {
-      it("should call BudgetDao.upsert with specified id", () => {
-        const budgetData: UpsertBudget = {
-          id: crypto.randomUUID(),
-          periodStart: "2025-01-01T07:00:00+0700",
-          periodEnd: "2025-02-01T07:00:00+0700",
-          expectedIncome: 100,
-          expectedExpense: 50,
-          expectedUtilization: 30,
-          expectedSurplus: 20,
-        };
-        const actual = upsertBudget(budgetData);
-        assertSpyCalls(daoUpsertStub, 1);
-        assertEquals(actual.id, budgetData.id);
-      });
-    });
-
-    describe("when id is not specified", () => {
-      it("should call BudgetDao.upsert with a generated id", () => {
-        const budgetData: UpsertBudget = {
-          periodStart: "2025-01-01T07:00:00+0700",
-          periodEnd: "2025-02-01T07:00:00+0700",
-          expectedIncome: 100,
-          expectedExpense: 50,
-          expectedUtilization: 30,
-          expectedSurplus: 20,
-        };
-        const actual = upsertBudget(budgetData);
-        assertSpyCalls(daoUpsertStub, 1);
-        assertNotEquals(actual.id, "");
-      });
+      budgetStub.upsert?.restore();
+      transactionCategoryStub.getByBudgetId?.restore();
     });
 
     describe("when expected_expense + expected_utilization + expected_suplus != expected_income", () => {
@@ -73,47 +67,131 @@ describe("budget.service", () => {
         assertIsError(actualError, HttpException<Status.Conflict>);
       });
     });
-  });
 
-  describe("getBudgetAsOf()", () => {
-    let daoUpsertStub: SpyLike | undefined;
+    describe("when an id is specified", () => {
+      const budgetData: UpsertBudget = {
+        id: crypto.randomUUID(),
+        periodStart: "2025-01-01T07:00:00+0700",
+        periodEnd: "2025-02-01T07:00:00+0700",
+        expectedIncome: 100,
+        expectedExpense: 50,
+        expectedUtilization: 30,
+        expectedSurplus: 20,
+      };
+      let actualBudget: BudgetResult;
 
-    afterEach(() => {
-      if (daoUpsertStub) {
-        daoUpsertStub.restore();
-      }
+      beforeEach(() => {
+        actualBudget = upsertBudget(budgetData);
+      });
+
+      it("should call Budget.upsert with the specified budget ID", () => {
+        assertSpyCalls(budgetStub.upsert!, 1);
+        assertEquals(actualBudget.id, budgetData.id);
+        assertSpyCalls(transactionCategoryStub.getByBudgetId!, 1);
+      });
+
+      it("should call TransactionCategory.getByBudgetId with the specified budget ID", () => {
+        assertSpyCalls(transactionCategoryStub.getByBudgetId!, 1);
+        assertSpyCallArgs(transactionCategoryStub.getByBudgetId!, 0, [
+          budgetData.id,
+        ]);
+      });
     });
 
-    describe("when budget exists", () => {
-      it("should return budget", () => {
-        const expected: Budget = {
-          id: crypto.randomUUID(),
-          periodStart: Chrono.from("2025-01-01"),
-          periodEnd: Chrono.from("2025-02-01"),
-          expectedIncome: 100,
-          expectedExpense: 60,
-          expectedUtilization: 30,
-          expectedSurplus: 10,
-        };
-        daoUpsertStub = stub(Budget, "getActiveAsOf", (_asOf) => [expected]);
+    describe("when an id is not specified", () => {
+      const budgetData: UpsertBudget = {
+        periodStart: "2025-01-01T07:00:00+0700",
+        periodEnd: "2025-02-01T07:00:00+0700",
+        expectedIncome: 100,
+        expectedExpense: 50,
+        expectedUtilization: 30,
+        expectedSurplus: 20,
+      };
+      let actualBudget: BudgetResult;
 
-        const actual = getBudgetAsOf(Chrono.from("2025-01-15"));
-
-        assertEquals(actual.id, expected.id);
-        assertSpyCalls(daoUpsertStub, 1);
+      beforeEach(() => {
+        actualBudget = upsertBudget(budgetData);
       });
+
+      it("should call Budget.upsert with a generated id", () => {
+        assertSpyCalls(budgetStub.upsert!, 1);
+        assertNotEquals(actualBudget.id, "");
+      });
+
+      it("should call TransactionCategory.getByBudgetId with the specified budget ID", () => {
+        assertSpyCalls(transactionCategoryStub.getByBudgetId!, 1);
+        assertSpyCallArgs(transactionCategoryStub.getByBudgetId!, 0, [
+          actualBudget.id,
+        ]);
+      });
+    });
+  });
+
+  describe("getBudgetAsOf", () => {
+    const budgetStub: BudgetStub = {};
+    const transactionCategoryStub: TransactionCategoryStub = {};
+
+    beforeEach(() => {
+      budgetStub.getActiveAsOf?.restore();
+      budgetStub.getActiveAsOf = stub(Budget, "getActiveAsOf", (_) => []);
+    });
+
+    it("should call Budget.getActiveAsOf", () => {
+      const asOf = Chrono.from("2025-01-15");
+      assertThrows(() => getBudgetAsOf(asOf));
+      assertSpyCallArgs(budgetStub.getActiveAsOf!, 0, [asOf]);
     });
 
     describe("when budget does not exists", () => {
       it("should throw", () => {
-        daoUpsertStub = stub(Budget, "getActiveAsOf", (_asOf) => []);
-
-        const actual = assertThrows(() =>
+        const error = assertThrows(() =>
           getBudgetAsOf(Chrono.from("2025-01-15"))
         );
+        assertIsError(error, HttpException<Status.NotFound>);
+      });
+    });
 
-        assertIsError(actual, HttpException<Status.NotFound>);
-        assertSpyCalls(daoUpsertStub, 1);
+    describe("when budget exists", () => {
+      const existingBudget: Budget = {
+        id: crypto.randomUUID(),
+        periodStart: Chrono.from("2025-01-01"),
+        periodEnd: Chrono.from("2025-02-01"),
+        expectedIncome: 100,
+        expectedExpense: 60,
+        expectedUtilization: 30,
+        expectedSurplus: 10,
+      };
+      let actual: BudgetResult;
+
+      beforeEach(() => {
+        budgetStub.getActiveAsOf?.restore();
+        budgetStub.getActiveAsOf = stub(
+          Budget,
+          "getActiveAsOf",
+          (_) => [existingBudget],
+        );
+
+        transactionCategoryStub.getByBudgetId?.restore();
+        transactionCategoryStub.getByBudgetId = stub(
+          TransactionCategory,
+          "getByBudgetId",
+          (_) => [],
+        );
+
+        actual = getBudgetAsOf(Chrono.from("2025-01-15"));
+      });
+
+      it("should call TransactionCategory.getByBudgetId", () => {
+        assertSpyCallArgs(
+          transactionCategoryStub.getByBudgetId!,
+          0,
+          [existingBudget.id],
+        );
+        assertSpyCalls(transactionCategoryStub.getByBudgetId!, 1);
+      });
+
+      it("should return budget", () => {
+        assertEquals(actual.id, existingBudget.id);
       });
     });
   });
