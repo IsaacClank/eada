@@ -1,5 +1,20 @@
 {
-  "$schema": "https://raw.githubusercontent.com/denoland/deno/refs/tags/v2.3.3/cli/schemas/config-file.v1.json",
+  "$schema": "https://raw.githubusercontent.com/denoland/deno/refs/tags/v2.5.0/cli/schemas/config-file.v1.json",
+  "permissions": {
+    "default": {
+      "net": ["0.0.0.0:3760"],
+      "env": ["HOME", "PORT", "DB_PATH"],
+      "read": ["./migrations/", "/home/isaac/.local/share/eada/"],
+      "write": ["/home/isaac/.local/share/eada"]
+    }
+  },
+  "test": {
+    "permissions": {
+      "env": ["HOME", "PORT", "DB_PATH"],
+      "read": ["./migrations/", "/home/isaac/.local/share/eada/"],
+      "write": ["/home/isaac/.local/share/eada"]
+    }
+  },
   "tasks": {
     "ci:lint": "deno lint",
     "ci:fmt": "deno fmt --check",
@@ -12,9 +27,9 @@
         "ci:check"
       ]
     },
-    "dev": "deno run --env-file --allow-net --allow-read --allow-write --allow-env --watch src/main.ts",
-    "test": "deno test --env-file=.env.test --allow-read --allow-write --allow-env --coverage",
-    "test:watch": "deno test --env-file=.env.test --allow-read --allow-write --allow-env --watch"
+    "dev": "deno run -P --env-file --watch src/main.ts",
+    "test": "deno test -P --env-file=.env.test --coverage",
+    "test:watch": "deno test -P --env-file=.env.test --watch"
   },
   "imports": {
     "@oak/common": "jsr:@oak/commons@^1.0.1",
