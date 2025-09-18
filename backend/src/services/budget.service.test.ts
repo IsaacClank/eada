@@ -61,6 +61,7 @@ describe("budget.service", () => {
         const actualError = assertThrows(
           () =>
             upsertBudget({
+              id: null,
               periodStart: "2025-01-01",
               periodEnd: "2025-02-01",
               expectedIncome: 100,
@@ -105,6 +106,7 @@ describe("budget.service", () => {
 
     describe("when an id is not specified", () => {
       const budgetData: UpsertBudget = {
+        id: null,
         periodStart: "2025-01-01T07:00:00+0700",
         periodEnd: "2025-02-01T07:00:00+0700",
         expectedIncome: 100,

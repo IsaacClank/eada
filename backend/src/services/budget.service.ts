@@ -28,7 +28,7 @@ enum ErrorCode {
 }
 
 export interface UpsertBudget {
-  id?: string;
+  id: string | null;
   periodStart: string;
   periodEnd: string;
   expectedIncome: number;

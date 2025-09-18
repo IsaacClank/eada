@@ -1,15 +1,11 @@
-import { Router } from "@oak/oak/router";
 import { Application } from "@oak/oak/application";
 import { Logger } from "./lib/logger.ts";
 import { isHttpError } from "@oak/common/http_errors";
-import {
-  getBudgetAsOf,
-  replaceTransactionCategories,
-  upsertBudget,
-} from "./services/budget.service.ts";
 import { Status } from "@oak/common/status";
-import { Chrono } from "./lib/chrono.ts";
-import { Context } from "@oak/oak/context";
+import { ContractViolationException } from "./lib/contract.ts";
+
+import * as commonApi from "./api/common.api.ts";
+import * as budgetApi from "./api/budget.api.ts";
 
 export const server = new Application();
 
@@ -37,6 +33,13 @@ server.use(async ({ response: res }, next) => {
       stack = ex.stack;
     }
 
+    if (ex instanceof ContractViolationException) {
+      status = Status.BadRequest;
+      code = ex.message;
+      details = ex.cause;
+      stack = ex.stack;
+    }
+
     res.status = status;
     res.body = {
       code,
@@ -48,28 +51,5 @@ server.use(async ({ response: res }, next) => {
 });
 
 // Routes
-const router = new Router();
-
-router.get("/health", ({ response: res }) => (res.status = 200));
-
-router.post("/budget", async (c) => {
-  const reqBody = await c.request.body.json();
-  c.response.body = upsertBudget(reqBody);
-});
-
-router.get("/budget", (c: Context) => {
-  const asOfRaw: string | null = c.request.url.searchParams.get("asOf");
-  c.assert(asOfRaw != null, Status.BadRequest, "InvalidInput", {
-    cause: "missing query parameter asOf",
-  });
-  c.response.body = getBudgetAsOf(Chrono.from(asOfRaw));
-});
-
-router.put("/budget/:budgetId/category", async (c) => {
-  const budgetId = c.params.budgetId;
-  const data = await c.request.body.json();
-  c.response.body = replaceTransactionCategories(budgetId, data);
-});
-
-server.use(router.routes());
-server.use(router.allowedMethods());
+server.use(commonApi.router.routes(), commonApi.router.allowedMethods());
+server.use(budgetApi.router.routes(), budgetApi.router.allowedMethods());
