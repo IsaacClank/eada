@@ -2,7 +2,7 @@ import { Application } from "@oak/oak/application";
 import { Logger } from "./lib/logger.ts";
 import { isHttpError } from "@oak/common/http_errors";
 import { Status } from "@oak/common/status";
-import { ContractViolationException } from "./lib/contract.ts";
+import { $ZodError, $ZodIssueBase } from "zod/v4/core";
 
 import * as commonApi from "./api/common.api.ts";
 import * as budgetApi from "./api/budget.api.ts";
@@ -23,21 +23,22 @@ server.use(async ({ response: res }, next) => {
   } catch (ex) {
     let status = Status.InternalServerError;
     let code = null;
-    let details = null;
+    let details = [];
     let stack = null;
 
     if (isHttpError(ex)) {
       status = ex.status;
       code = ex.message;
-      details = ex.cause;
+      details = [ex.cause];
       stack = ex.stack;
     }
 
-    if (ex instanceof ContractViolationException) {
+    if (ex instanceof $ZodError) {
       status = Status.BadRequest;
-      code = ex.message;
-      details = ex.cause;
-      stack = ex.stack;
+      code = "ContractViolation";
+      details = JSON.parse(ex.message).map((msg: $ZodIssueBase) =>
+        `${msg.path.join(".")}: ${msg.message.split(": ").slice(1)}`
+      );
     }
 
     res.status = status;
@@ -46,7 +47,10 @@ server.use(async ({ response: res }, next) => {
       details,
       stack,
     };
-    Logger.err(`${code}: ${details}`);
+
+    details.forEach((detail: string) => {
+      Logger.err(`${code}: ${detail}`);
+    });
   }
 });
 

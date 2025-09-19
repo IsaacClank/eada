@@ -4,22 +4,11 @@ import { HttpException } from "../lib/exception.ts";
 import { Budget } from "../db/models/budget.ts";
 import { TransactionCategory } from "../db/models/transaction-category.ts";
 import { ForeignKeyConstraintException } from "../db/common.ts";
-
-export interface BudgetResult {
-  id: string;
-  periodStart: string;
-  periodEnd: string;
-  expectedIncome: number;
-  expectedExpense: number;
-  expectedUtilization: number;
-  expectedSurplus: number;
-  categories: TransactionCategoryResult[];
-}
-export interface TransactionCategoryResult {
-  name: string;
-  type: string;
-  rate: number;
-}
+import {
+  BudgetContract,
+  ReplaceTransactionCategoryContract,
+  UpsertBudgetContract,
+} from "../contracts.ts";
 
 enum ErrorCode {
   InvalidBudgetState = "InvalidBudgetState",
@@ -27,20 +16,10 @@ enum ErrorCode {
   InvalidTransactionCategoriesState = "InvalidTransactionCategoriesState",
 }
 
-export interface UpsertBudget {
-  id: string | null;
-  periodStart: string;
-  periodEnd: string;
-  expectedIncome: number;
-  expectedExpense: number;
-  expectedUtilization: number;
-  expectedSurplus: number;
-}
-
 /**
  * @throw HttpException<Status.Conflict>
  */
-export function upsertBudget(data: UpsertBudget): BudgetResult {
+export function upsertBudget(data: UpsertBudgetContract): BudgetContract {
   if (
     data.expectedExpense
         + data.expectedUtilization
@@ -77,7 +56,7 @@ export function upsertBudget(data: UpsertBudget): BudgetResult {
 /**
  * @throw HttpException<Status.NotFound>
  */
-export function getBudgetAsOf(asOf: Chrono): BudgetResult {
+export function getBudgetAsOf(asOf: Chrono): BudgetContract {
   const budgets = Budget.getActiveAsOf(asOf);
   if (budgets.length === 0) {
     throw new HttpException<Status.NotFound>(
@@ -103,19 +82,13 @@ export function getBudgetAsOf(asOf: Chrono): BudgetResult {
   };
 }
 
-export interface CreateTransactionCategory {
-  name: string;
-  type: string;
-  rate: number;
-}
-
 /**
  * @throw HttpException<Status.BadRequest>
  */
 export function replaceTransactionCategories(
   budgetId: string,
-  categoriesData: CreateTransactionCategory[],
-): BudgetResult {
+  categoriesData: ReplaceTransactionCategoryContract[],
+): BudgetContract {
   try {
     TransactionCategory.deleteByBudgetId(budgetId);
 

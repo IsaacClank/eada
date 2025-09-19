@@ -5,60 +5,27 @@ import {
   replaceTransactionCategories,
   upsertBudget,
 } from "../services/budget.service.ts";
-import { Contract } from "../lib/contract.ts";
+import {
+  ReplaceTransactionCategoryContract,
+  UpsertBudgetContract,
+} from "../contracts.ts";
 
 export const router = new Router();
 
 router.post("/budget", async (c) => {
-  const data = await c.request.body.json();
-  c.response.body = upsertBudget({
-    id: Contract.from(data.id, "id").toNullableString(),
-    periodStart: Contract
-      .from(data.periodStart, "periodStart")
-      .notNullOrUndefined()
-      .toString(),
-    periodEnd: Contract
-      .from(data.periodEnd, "periodEnd")
-      .notNullOrUndefined()
-      .toString(),
-    expectedIncome: Contract
-      .from(data.expectedIncome, "expectedIncome")
-      .notNullOrUndefined()
-      .toNumber(),
-    expectedExpense: Contract
-      .from(data.expectedExpense, "expectedExpense")
-      .notNullOrUndefined()
-      .toNumber(),
-    expectedUtilization: Contract
-      .from(data.expectedUtilization, "expectedUtilization")
-      .notNullOrUndefined()
-      .toNumber(),
-    expectedSurplus: Contract
-      .from(data.expectedSurplus, "expectedSurplus")
-      .notNullOrUndefined()
-      .toNumber(),
-  });
+  const data = await c.request.body.json().then(UpsertBudgetContract.parse);
+  c.response.body = upsertBudget(data);
 });
 
 router.get("/budget", (c) => {
-  const parsedAsOf = Contract
-    .from(c.request.url.searchParams.get("asOf"), "asOf")
-    .notNullOrUndefined()
-    .toString();
+  const parsedAsOf = c.request.url.searchParams.get("asOf");
   c.response.body = getBudgetAsOf(Chrono.from(parsedAsOf));
 });
 
 router.put("/budget/:budgetId/category", async (c) => {
-  const budgetId = Contract
-    .from(c.params.budgetId, "budgetId")
-    .notNullOrUndefined()
-    .toString();
-  const data = Contract.from(await c.request.body.json(), "body").toArray();
-  data.forEach((entry, index) => {
-    Contract.from(entry.name, `${index}.name`).notNullOrUndefined().toString();
-    Contract.from(entry.type, `${index}.type`).notNullOrUndefined().toString();
-    Contract.from(entry.rate, `${index}.rate`).notNullOrUndefined().toString();
-  });
-
+  const budgetId = c.params.budgetId;
+  const data = ReplaceTransactionCategoryContract
+    .array()
+    .parse(await c.request.body.json());
   c.response.body = replaceTransactionCategories(budgetId, data);
 });

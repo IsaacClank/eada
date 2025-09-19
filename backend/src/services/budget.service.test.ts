@@ -12,10 +12,8 @@ import {
   stub,
 } from "@std/testing/mock";
 import {
-  BudgetResult,
   getBudgetAsOf,
   replaceTransactionCategories,
-  UpsertBudget,
   upsertBudget,
 } from "./budget.service.ts";
 import { Chrono } from "../lib/chrono.ts";
@@ -24,6 +22,7 @@ import { HttpException } from "../lib/exception.ts";
 import { Budget } from "../db/models/budget.ts";
 import { TransactionCategory } from "../db/models/transaction-category.ts";
 import { ForeignKeyConstraintException } from "../db/common.ts";
+import { BudgetContract, UpsertBudgetContract } from "../contracts.ts";
 
 type BudgetStub = {
   upsert?: SpyLike;
@@ -61,7 +60,6 @@ describe("budget.service", () => {
         const actualError = assertThrows(
           () =>
             upsertBudget({
-              id: null,
               periodStart: "2025-01-01",
               periodEnd: "2025-02-01",
               expectedIncome: 100,
@@ -75,7 +73,7 @@ describe("budget.service", () => {
     });
 
     describe("when an id is specified", () => {
-      const budgetData: UpsertBudget = {
+      const budgetData: UpsertBudgetContract = {
         id: crypto.randomUUID(),
         periodStart: "2025-01-01T07:00:00+0700",
         periodEnd: "2025-02-01T07:00:00+0700",
@@ -84,7 +82,7 @@ describe("budget.service", () => {
         expectedUtilization: 30,
         expectedSurplus: 20,
       };
-      let actualBudget: BudgetResult;
+      let actualBudget: BudgetContract;
 
       beforeEach(() => {
         actualBudget = upsertBudget(budgetData);
@@ -105,8 +103,7 @@ describe("budget.service", () => {
     });
 
     describe("when an id is not specified", () => {
-      const budgetData: UpsertBudget = {
-        id: null,
+      const budgetData: UpsertBudgetContract = {
         periodStart: "2025-01-01T07:00:00+0700",
         periodEnd: "2025-02-01T07:00:00+0700",
         expectedIncome: 100,
@@ -114,7 +111,7 @@ describe("budget.service", () => {
         expectedUtilization: 30,
         expectedSurplus: 20,
       };
-      let actualBudget: BudgetResult;
+      let actualBudget: BudgetContract;
 
       beforeEach(() => {
         actualBudget = upsertBudget(budgetData);
@@ -168,7 +165,7 @@ describe("budget.service", () => {
         expectedUtilization: 30,
         expectedSurplus: 10,
       };
-      let actual: BudgetResult;
+      let actual: BudgetContract;
 
       beforeEach(() => {
         budgetStub.getActiveAsOf?.restore();
@@ -313,7 +310,7 @@ describe("budget.service", () => {
     });
 
     it("should return updated budget data", () => {
-      const expected: BudgetResult = {
+      const expected: BudgetContract = {
         ...expectedBudget,
         periodStart: expectedBudget.periodStart.toString(),
         periodEnd: expectedBudget.periodEnd.toString(),
