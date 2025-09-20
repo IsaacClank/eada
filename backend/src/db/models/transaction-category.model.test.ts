@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, it } from "@std/testing/bdd";
 import { applyDbMigrations } from "../migration.ts";
 import { Config } from "../../config.ts";
-import { TransactionCategory } from "./transaction-category.ts";
+import { TransactionCategory } from "./transaction-category.model.ts";
 import { Chrono } from "../../lib/chrono.ts";
 import {
   assert,
@@ -10,7 +10,7 @@ import {
   assertIsError,
   assertThrows,
 } from "@std/assert";
-import { Budget } from "./budget.ts";
+import { Budget } from "./budget.model.ts";
 import { ForeignKeyConstraintException } from "../common.ts";
 
 describe("TransactionCategory", () => {

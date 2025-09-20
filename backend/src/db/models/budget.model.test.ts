@@ -3,7 +3,7 @@ import { applyDbMigrations } from "../migration.ts";
 import { Config } from "../../config.ts";
 import { Chrono } from "../../lib/chrono.ts";
 import { assertArrayIncludes, assertEquals } from "@std/assert";
-import { Budget } from "./budget.ts";
+import { Budget } from "./budget.model.ts";
 
 describe("Budget", () => {
   beforeEach(async () => {

@@ -1,8 +1,8 @@
 import { Status } from "@oak/common/status";
 import { Chrono } from "../lib/chrono.ts";
 import { HttpException } from "../lib/exception.ts";
-import { Budget } from "../db/models/budget.ts";
-import { TransactionCategory } from "../db/models/transaction-category.ts";
+import { Budget } from "../db/models/budget.model.ts";
+import { TransactionCategory } from "../db/models/transaction-category.model.ts";
 import { ForeignKeyConstraintException } from "../db/common.ts";
 import {
   BudgetContract,
