@@ -262,6 +262,21 @@ describe("budget.service", () => {
       );
     });
 
+    describe("when rates of the same type do not add up to 1", () => {
+      it("should throw", () => {
+        const actual = assertThrows(() =>
+          replaceTransactionCategories(expectedBudget.id, [
+            {
+              name: "Salary",
+              type: "Income",
+              rate: 0.9,
+            },
+          ])
+        );
+        assertIsError(actual, HttpException<Status.BadRequest>);
+      });
+    });
+
     it("should call TransactionCategory.deleteByBudgetId", () => {
       replaceTransactionCategories(expectedBudget.id, []);
       assertSpyCallArgs(transactionCategoryStub.deleteByBudgetId!, 0, [

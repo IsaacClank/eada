@@ -9,6 +9,7 @@ import {
   ReplaceTransactionCategoryContract,
   UpsertBudgetContract,
 } from "../contracts.ts";
+import { Collection } from "../lib/collection.ts";
 
 enum ErrorCode {
   InvalidBudgetState = "InvalidBudgetState",
@@ -90,6 +91,17 @@ export function replaceTransactionCategories(
   categoriesData: ReplaceTransactionCategoryContract[],
 ): BudgetContract {
   try {
+    const rateSumOfEachTypeIsOne = Collection
+      .from(categoriesData)
+      .groupBy((c) => c.type).toArray()
+      .every((group) => group.reduce((sum, c) => sum + c.rate, 0) === 1);
+    if (!rateSumOfEachTypeIsOne) {
+      throw new HttpException<Status.BadRequest>(
+        ErrorCode.InvalidTransactionCategoriesState,
+        "Rates of the same type must add up to 1",
+      );
+    }
+
     TransactionCategory.deleteByBudgetId(budgetId);
 
     const categories = categoriesData.length
