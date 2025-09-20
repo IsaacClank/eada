@@ -31,7 +31,7 @@ export class Model {
 
     const sqlBuilder = new StringBuilder()
       .a("SELECT *").n()
-      .a(`FROM ${this.Table}`).n()
+      .a(`FROM [${this.Table}]`).n()
       .a(`WHERE id IN (${ids.map((_) => "?").join(",")})`);
 
     return getDbConnection()
