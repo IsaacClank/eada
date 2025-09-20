@@ -4,6 +4,8 @@ import { getDbConnection } from "../connection.ts";
 import { Model } from "./model.ts";
 import { DbRecord, ForeignKeyConstraintException } from "../common.ts";
 
+type TransactionType = "Income" | "Expense" | "Utilization";
+
 export class TransactionCategory extends Model {
   static override readonly Table = "transaction_category";
   static override readonly Attributes = new Dict<string, string>([
@@ -16,7 +18,7 @@ export class TransactionCategory extends Model {
 
   budgetId: string;
   name: string;
-  type: string;
+  type: TransactionType;
   rate: number;
 
   protected constructor(data: TransactionCategory) {
@@ -36,7 +38,7 @@ export class TransactionCategory extends Model {
       id: String(output[this.column("id")]),
       budgetId: String(output[this.column("budgetId")]),
       name: String(output[this.column("name")]),
-      type: String(output[this.column("type")]),
+      type: String(output[this.column("type")]) as TransactionType,
       rate: Number(output[this.column("rate")]),
     });
   }
