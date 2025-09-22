@@ -48,7 +48,7 @@ export class Transaction extends Model {
       .a(`id, timestamp, category_id, amount, note`)
       .a(`)`).n()
       .a("VALUES (?, ?, ?, ?, ?)").n()
-      .a(';');
+      .a(";");
 
     const statement = getDbConnection().prepare(sqlBuilder.get());
     let changedRecordCount: number = 0;
