@@ -6,7 +6,7 @@ import {
   upsertBudget,
 } from "../services/budget.service.ts";
 import {
-  ReplaceTransactionCategoryContract,
+  ReplaceBudgetCategoryContract,
   UpsertBudgetContract,
 } from "../contracts.ts";
 
@@ -24,7 +24,7 @@ router.get("/budget", (c) => {
 
 router.put("/budget/:budgetId/category", async (c) => {
   const budgetId = c.params.budgetId;
-  const data = ReplaceTransactionCategoryContract
+  const data = ReplaceBudgetCategoryContract
     .array()
     .parse(await c.request.body.json());
   c.response.body = replaceTransactionCategories(budgetId, data);

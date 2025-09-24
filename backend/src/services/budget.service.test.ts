@@ -20,7 +20,7 @@ import { Chrono } from "../lib/chrono.ts";
 import { Status } from "@oak/common/status";
 import { HttpException } from "../lib/exception.ts";
 import { Budget } from "../db/models/budget.model.ts";
-import { TransactionCategory } from "../db/models/transaction-category.model.ts";
+import { BudgetCategory } from "../db/models/budget-category.model.ts";
 import { ForeignKeyConstraintException } from "../db/common.ts";
 import { BudgetContract, UpsertBudgetContract } from "../contracts.ts";
 
@@ -44,7 +44,7 @@ describe("budget.service", () => {
     beforeEach(() => {
       budgetStub.upsert = stub(Budget, "upsert", (...data) => data);
       transactionCategoryStub.getByBudgetId = stub(
-        TransactionCategory,
+        BudgetCategory,
         "getByBudgetId",
         (_) => [],
       );
@@ -177,7 +177,7 @@ describe("budget.service", () => {
 
         transactionCategoryStub.getByBudgetId?.restore();
         transactionCategoryStub.getByBudgetId = stub(
-          TransactionCategory,
+          BudgetCategory,
           "getByBudgetId",
           (_) => [],
         );
@@ -214,21 +214,21 @@ describe("budget.service", () => {
       expectedSurplus: 20,
     });
     const expectedTransactionCategories = [
-      TransactionCategory.from({
+      BudgetCategory.from({
         id: crypto.randomUUID(),
         budgetId: expectedBudget.id,
         name: "Salary",
         type: "Income",
         rate: 1,
       }),
-      TransactionCategory.from({
+      BudgetCategory.from({
         id: crypto.randomUUID(),
         budgetId: expectedBudget.id,
         name: "All expense",
         type: "Expense",
         rate: 1,
       }),
-      TransactionCategory.from({
+      BudgetCategory.from({
         id: crypto.randomUUID(),
         budgetId: expectedBudget.id,
         name: "Investment & Saving",
@@ -247,14 +247,14 @@ describe("budget.service", () => {
 
       transactionCategoryStub.deleteByBudgetId?.restore();
       transactionCategoryStub.deleteByBudgetId = stub(
-        TransactionCategory,
+        BudgetCategory,
         "deleteByBudgetId",
         (_) => {},
       );
 
       transactionCategoryStub.upsert?.restore();
       transactionCategoryStub.upsert = stub(
-        TransactionCategory,
+        BudgetCategory,
         "upsert",
         (...data) => {
           return data;
@@ -303,7 +303,7 @@ describe("budget.service", () => {
       beforeEach(() => {
         transactionCategoryStub.deleteByBudgetId?.restore();
         transactionCategoryStub.deleteByBudgetId = stub(
-          TransactionCategory,
+          BudgetCategory,
           "deleteByBudgetId",
           (_) => {
             throw new ForeignKeyConstraintException();

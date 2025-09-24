@@ -2,11 +2,11 @@ import { Status } from "@oak/common/status";
 import { Chrono } from "../lib/chrono.ts";
 import { HttpException } from "../lib/exception.ts";
 import { Budget } from "../db/models/budget.model.ts";
-import { TransactionCategory } from "../db/models/transaction-category.model.ts";
+import { BudgetCategory } from "../db/models/budget-category.model.ts";
 import { ForeignKeyConstraintException } from "../db/common.ts";
 import {
   BudgetContract,
-  ReplaceTransactionCategoryContract,
+  ReplaceBudgetCategoryContract,
   UpsertBudgetContract,
 } from "../contracts.ts";
 import { Collection } from "../lib/collection.ts";
@@ -38,7 +38,7 @@ export function upsertBudget(data: UpsertBudgetContract): BudgetContract {
     periodStart: Chrono.from(data.periodStart),
     periodEnd: Chrono.from(data.periodEnd),
   })[0];
-  const budgetTransactionCategories = TransactionCategory.getByBudgetId(
+  const budgetTransactionCategories = BudgetCategory.getByBudgetId(
     budget.id,
   );
 
@@ -63,7 +63,7 @@ export function getBudgetAsOf(asOf: Chrono): BudgetContract {
   }
 
   const budget = budgets[0];
-  const budgetTransactionCategories = TransactionCategory.getByBudgetId(
+  const budgetTransactionCategories = BudgetCategory.getByBudgetId(
     budget.id,
   );
 
@@ -80,7 +80,7 @@ export function getBudgetAsOf(asOf: Chrono): BudgetContract {
  */
 export function replaceTransactionCategories(
   budgetId: string,
-  categoriesData: ReplaceTransactionCategoryContract[],
+  categoriesData: ReplaceBudgetCategoryContract[],
 ): BudgetContract {
   try {
     const rateSumOfEachTypeIsOne = Collection
@@ -94,10 +94,10 @@ export function replaceTransactionCategories(
       );
     }
 
-    TransactionCategory.deleteByBudgetId(budgetId);
+    BudgetCategory.deleteByBudgetId(budgetId);
 
     const categories = categoriesData.length
-      ? TransactionCategory.upsert(...categoriesData.map((c) => (
+      ? BudgetCategory.upsert(...categoriesData.map((c) => (
         {
           id: c.id ?? crypto.randomUUID(),
           budgetId,

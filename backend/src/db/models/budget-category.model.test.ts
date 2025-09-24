@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, it } from "@std/testing/bdd";
 import { applyDbMigrations } from "../migration.ts";
 import { Config } from "../../config.ts";
-import { TransactionCategory } from "./transaction-category.model.ts";
+import { BudgetCategory } from "./budget-category.model.ts";
 import { Chrono } from "../../lib/chrono.ts";
 import {
   assert,
@@ -37,36 +37,36 @@ describe("TransactionCategory", () => {
 
   describe("upsert", () => {
     it("should work", () => {
-      const expectedCategories: TransactionCategory[] = [
-        TransactionCategory.from({
+      const expectedCategories: BudgetCategory[] = [
+        BudgetCategory.from({
           id: crypto.randomUUID(),
           budgetId: expectedBudget.id,
           name: "Salary",
           type: "Income",
           rate: 1,
         }),
-        TransactionCategory.from({
+        BudgetCategory.from({
           id: crypto.randomUUID(),
           budgetId: expectedBudget.id,
           name: "Essential",
           type: "Expense",
           rate: 0.5,
         }),
-        TransactionCategory.from({
+        BudgetCategory.from({
           id: crypto.randomUUID(),
           budgetId: expectedBudget.id,
           name: "Non-Essential",
           type: "Expense",
           rate: 0.3,
         }),
-        TransactionCategory.from({
+        BudgetCategory.from({
           id: crypto.randomUUID(),
           budgetId: expectedBudget.id,
           name: "Saving",
           type: "Utilization",
           rate: 0.1,
         }),
-        TransactionCategory.from({
+        BudgetCategory.from({
           id: crypto.randomUUID(),
           budgetId: expectedBudget.id,
           name: "Investment",
@@ -74,7 +74,7 @@ describe("TransactionCategory", () => {
           rate: 0.1,
         }),
       ];
-      const actualCategories = TransactionCategory.upsert(
+      const actualCategories = BudgetCategory.upsert(
         ...expectedCategories,
       );
 
@@ -85,8 +85,8 @@ describe("TransactionCategory", () => {
 
     describe("when the specified budget is non-existent", () => {
       it("should throw", () => {
-        const expectedCategories: TransactionCategory[] = [
-          TransactionCategory.from({
+        const expectedCategories: BudgetCategory[] = [
+          BudgetCategory.from({
             id: crypto.randomUUID(),
             budgetId: crypto.randomUUID(),
             name: "Salary",
@@ -96,7 +96,7 @@ describe("TransactionCategory", () => {
         ];
 
         const actual = assertThrows(() =>
-          TransactionCategory.upsert(...expectedCategories)
+          BudgetCategory.upsert(...expectedCategories)
         );
 
         assertIsError(actual, ForeignKeyConstraintException);
@@ -107,28 +107,28 @@ describe("TransactionCategory", () => {
   describe("getByIds", () => {
     describe("when no argument is provided", () => {
       it("should return an empty array", () => {
-        assertEquals(TransactionCategory.getByIds().length, 0);
+        assertEquals(BudgetCategory.getByIds().length, 0);
       });
     });
 
     describe("when argments are provided", () => {
       it("should return records with matching ids", () => {
-        const expectedCategories: TransactionCategory[] = [
-          TransactionCategory.from({
+        const expectedCategories: BudgetCategory[] = [
+          BudgetCategory.from({
             id: crypto.randomUUID(),
             budgetId: expectedBudget.id,
             name: "Salary",
             type: "Income",
             rate: 1,
           }),
-          TransactionCategory.from({
+          BudgetCategory.from({
             id: crypto.randomUUID(),
             budgetId: expectedBudget.id,
             name: "Essential",
             type: "Expense",
             rate: 0.5,
           }),
-          TransactionCategory.from({
+          BudgetCategory.from({
             id: crypto.randomUUID(),
             budgetId: expectedBudget.id,
             name: "Investment",
@@ -136,9 +136,9 @@ describe("TransactionCategory", () => {
             rate: 0.5,
           }),
         ];
-        TransactionCategory.upsert(...expectedCategories);
+        BudgetCategory.upsert(...expectedCategories);
         assertArrayIncludes(
-          TransactionCategory.getByIds(...expectedCategories.map((c) => c.id)),
+          BudgetCategory.getByIds(...expectedCategories.map((c) => c.id)),
           expectedCategories,
         );
       });
@@ -147,22 +147,22 @@ describe("TransactionCategory", () => {
 
   describe("getByBudgetId", () => {
     it("should search and return records based on budget ID", () => {
-      const expectedCategories: TransactionCategory[] = [
-        TransactionCategory.from({
+      const expectedCategories: BudgetCategory[] = [
+        BudgetCategory.from({
           id: crypto.randomUUID(),
           budgetId: expectedBudget.id,
           name: "Salary",
           type: "Income",
           rate: 1,
         }),
-        TransactionCategory.from({
+        BudgetCategory.from({
           id: crypto.randomUUID(),
           budgetId: expectedBudget.id,
           name: "Essential",
           type: "Expense",
           rate: 0.5,
         }),
-        TransactionCategory.from({
+        BudgetCategory.from({
           id: crypto.randomUUID(),
           budgetId: expectedBudget.id,
           name: "Investment",
@@ -170,9 +170,9 @@ describe("TransactionCategory", () => {
           rate: 0.5,
         }),
       ];
-      TransactionCategory.upsert(...expectedCategories);
+      BudgetCategory.upsert(...expectedCategories);
       assertArrayIncludes(
-        TransactionCategory.getByBudgetId(expectedBudget.id),
+        BudgetCategory.getByBudgetId(expectedBudget.id),
         expectedCategories,
       );
     });
@@ -180,22 +180,22 @@ describe("TransactionCategory", () => {
 
   describe("deleteByBudgetId", () => {
     it("should deletes transaction categories belonging to the specified budget", () => {
-      const expectedCategories: TransactionCategory[] = [
-        TransactionCategory.from({
+      const expectedCategories: BudgetCategory[] = [
+        BudgetCategory.from({
           id: crypto.randomUUID(),
           budgetId: expectedBudget.id,
           name: "Salary",
           type: "Income",
           rate: 1,
         }),
-        TransactionCategory.from({
+        BudgetCategory.from({
           id: crypto.randomUUID(),
           budgetId: expectedBudget.id,
           name: "Essential",
           type: "Expense",
           rate: 0.5,
         }),
-        TransactionCategory.from({
+        BudgetCategory.from({
           id: crypto.randomUUID(),
           budgetId: expectedBudget.id,
           name: "Investment",
@@ -203,10 +203,10 @@ describe("TransactionCategory", () => {
           rate: 0.5,
         }),
       ];
-      TransactionCategory.upsert(...expectedCategories);
-      TransactionCategory.deleteByBudgetId(expectedBudget.id);
+      BudgetCategory.upsert(...expectedCategories);
+      BudgetCategory.deleteByBudgetId(expectedBudget.id);
       assertEquals(
-        TransactionCategory
+        BudgetCategory
           .getByIds(...expectedCategories.map((e) => e.id))
           .length,
         0,

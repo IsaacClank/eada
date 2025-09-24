@@ -6,8 +6,8 @@ import { DbRecord, ForeignKeyConstraintException } from "../common.ts";
 
 type TransactionType = "Income" | "Expense" | "Utilization";
 
-export class TransactionCategory extends Model {
-  static override readonly Table = "transaction_category";
+export class BudgetCategory extends Model {
+  static override readonly Table = "budget_category";
   static override readonly Attributes = new Dict<string, string>([
     ["id", "id"],
     ["budgetId", "budget_id"],
@@ -21,7 +21,7 @@ export class TransactionCategory extends Model {
   type: TransactionType;
   rate: number;
 
-  protected constructor(data: TransactionCategory) {
+  protected constructor(data: BudgetCategory) {
     super(data);
     this.budgetId = data.budgetId;
     this.name = data.name;
@@ -29,8 +29,8 @@ export class TransactionCategory extends Model {
     this.rate = data.rate;
   }
 
-  static override from(data: TransactionCategory) {
-    return new TransactionCategory(data);
+  static override from(data: BudgetCategory) {
+    return new BudgetCategory(data);
   }
 
   static override fromDbRecord(output: DbRecord) {
@@ -46,7 +46,7 @@ export class TransactionCategory extends Model {
   /**
    * @throw ForeignKeyConstraintException
    */
-  static upsert(...categories: TransactionCategory[]): TransactionCategory[] {
+  static upsert(...categories: BudgetCategory[]): BudgetCategory[] {
     try {
       const queryBuilder = new StringBuilder()
         .a(`INSERT INTO ${this.Table} (id, budget_id, name, type, rate)`).n()
@@ -87,11 +87,11 @@ export class TransactionCategory extends Model {
     }
   }
 
-  static getByIds(...ids: string[]): TransactionCategory[] {
+  static getByIds(...ids: string[]): BudgetCategory[] {
     return super.getByIdsRaw(...ids).map((record) => this.fromDbRecord(record));
   }
 
-  static getByBudgetId(budgetId: string): TransactionCategory[] {
+  static getByBudgetId(budgetId: string): BudgetCategory[] {
     const sqlBuilder = new StringBuilder()
       .a("SELECT *").n()
       .a(`FROM ${this.Table}`).n()

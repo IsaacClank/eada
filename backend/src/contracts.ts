@@ -6,9 +6,9 @@ export const TransactionTypeContract = z.enum([
   "Utilization",
 ]);
 // deno-fmt-ignore
-export type TransactionTypeContract = z.infer<typeof TransactionCategoryContract>;
+export type TransactionTypeContract = z.infer<typeof BudgetCategoryContract>;
 
-export const TransactionCategoryContract = z.object({
+export const BudgetCategoryContract = z.object({
   id: z.string(),
   budgetId: z.string(),
   name: z.string(),
@@ -16,15 +16,15 @@ export const TransactionCategoryContract = z.object({
   rate: z.number(),
 });
 // deno-fmt-ignore
-export type TransactionCategoryContract = z.infer<typeof TransactionCategoryContract>;
+export type BudgetCategoryContract = z.infer<typeof BudgetCategoryContract>;
 
-export const ReplaceTransactionCategoryContract = TransactionCategoryContract
+export const ReplaceBudgetCategoryContract = BudgetCategoryContract
   .partial({
     id: true,
     budgetId: true,
   });
 // deno-fmt-ignore
-export type ReplaceTransactionCategoryContract = z.infer<typeof ReplaceTransactionCategoryContract>;
+export type ReplaceBudgetCategoryContract = z.infer<typeof ReplaceBudgetCategoryContract>;
 
 export const BudgetContract = z.object({
   id: z.string(),
@@ -34,7 +34,7 @@ export const BudgetContract = z.object({
   expectedExpense: z.number(),
   expectedUtilization: z.number(),
   expectedSurplus: z.number(),
-  categories: TransactionCategoryContract.array(),
+  categories: BudgetCategoryContract.array(),
 });
 export type BudgetContract = z.infer<typeof BudgetContract>;
 

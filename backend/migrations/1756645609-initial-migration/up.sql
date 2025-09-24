@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS "budget" (
 	PRIMARY KEY("id")
 );
 
-CREATE TABLE IF NOT EXISTS "transaction_category" (
+CREATE TABLE IF NOT EXISTS "budget_category" (
 	"id"	      TEXT  NOT NULL,
 	"budget_id"	TEXT  NOT NULL,
 	"name"	    TEXT  NOT NULL,
