@@ -329,13 +329,7 @@ describe("budget.service", () => {
         ...expectedBudget,
         periodStart: expectedBudget.periodStart.toString(),
         periodEnd: expectedBudget.periodEnd.toString(),
-        categories: expectedTransactionCategories.map((
-          { name, type, rate },
-        ) => ({
-          name,
-          type,
-          rate,
-        })),
+        categories: expectedTransactionCategories.map((x) => ({ ...x })),
       };
       const actual = replaceTransactionCategories(
         expectedBudget.id,

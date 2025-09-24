@@ -46,11 +46,7 @@ export function upsertBudget(data: UpsertBudgetContract): BudgetContract {
     ...budget,
     periodStart: budget.periodStart.toString(),
     periodEnd: budget.periodEnd.toString(),
-    categories: budgetTransactionCategories.map(({ name, type, rate }) => ({
-      name,
-      type,
-      rate,
-    })),
+    categories: budgetTransactionCategories,
   };
 }
 
@@ -75,11 +71,7 @@ export function getBudgetAsOf(asOf: Chrono): BudgetContract {
     ...budget,
     periodStart: budget.periodStart.toString(),
     periodEnd: budget.periodEnd.toString(),
-    categories: budgetTransactionCategories.map(({ name, type, rate }) => ({
-      name,
-      type,
-      rate,
-    })),
+    categories: budgetTransactionCategories,
   };
 }
 
@@ -107,7 +99,7 @@ export function replaceTransactionCategories(
     const categories = categoriesData.length
       ? TransactionCategory.upsert(...categoriesData.map((c) => (
         {
-          id: crypto.randomUUID(),
+          id: c.id ?? crypto.randomUUID(),
           budgetId,
           name: c.name,
           type: c.type,
@@ -121,11 +113,7 @@ export function replaceTransactionCategories(
       ...budget,
       periodStart: budget.periodStart.toString(),
       periodEnd: budget.periodEnd.toString(),
-      categories: categories.map(({ name, type, rate }) => ({
-        name,
-        type,
-        rate,
-      })),
+      categories: categories,
     };
   } catch (error) {
     if (error instanceof ForeignKeyConstraintException) {

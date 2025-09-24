@@ -34,9 +34,7 @@ export const BudgetContract = z.object({
   expectedExpense: z.number(),
   expectedUtilization: z.number(),
   expectedSurplus: z.number(),
-  categories: TransactionCategoryContract
-    .partial({ id: true, budgetId: true })
-    .array(),
+  categories: TransactionCategoryContract.array(),
 });
 export type BudgetContract = z.infer<typeof BudgetContract>;
 
