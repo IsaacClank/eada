@@ -84,7 +84,7 @@ export function replaceTransactionCategories(
       .every((group) => group.reduce((sum, c) => sum + c.rate, 0) === 1);
     if (!rateSumOfEachTypeIsOne) {
       throw new HttpException<Status.BadRequest>(
-        ErrorCode.InvalidTransactionCategoriesState,
+        ErrorCode.InvalidBudgetCategoryData,
         "Rates of the same type must add up to 1",
       );
     }
@@ -113,7 +113,7 @@ export function replaceTransactionCategories(
   } catch (error) {
     if (error instanceof ForeignKeyConstraintException) {
       throw new HttpException<Status.BadRequest>(
-        ErrorCode.InvalidTransactionCategoriesState,
+        ErrorCode.InvalidBudgetCategoryData,
         "No existing budget can be found with the given ID",
       );
     }

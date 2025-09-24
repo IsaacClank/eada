@@ -15,14 +15,17 @@ export function createTransactions(
   );
   if (conflictingBudgetId) {
     throw new HttpException<Status.BadRequest>(
-      ErrorCode.InvalidInput,
+      ErrorCode.InvalidTransactionState,
       "Conflicting budget ID argument",
     );
   }
 
   const budget = Budget.getByIds(budgetId)[0];
   if (budget == null) {
-    throw new HttpException<Status.NotFound>("");
+    throw new HttpException<Status.NotFound>(
+      ErrorCode.BudgetNotFound,
+      "No existing budget can be found with the given ID",
+    );
   }
 
   const anyTimestampOutsideBudgetActivePeriod = transactions.some((e) =>
@@ -31,7 +34,7 @@ export function createTransactions(
   );
   if (anyTimestampOutsideBudgetActivePeriod) {
     throw new HttpException<Status.Conflict>(
-      ErrorCode.InvalidInput,
+      ErrorCode.InvalidTransactionState,
       "Transaction timestamp falls outside of specified budget active period",
     );
   }
