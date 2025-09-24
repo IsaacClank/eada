@@ -36,6 +36,13 @@ describe("Chrono", () => {
       const actual = Chrono.from(datetimeStr);
       assertEquals(actual.millis(), expected);
     });
+
+    it("from another Chrono", () => {
+      const datetimeStr = "2025-01-01T07:00:00+0700";
+      const expected = Date.parse(datetimeStr);
+      const actual = Chrono.from(Chrono.from(datetimeStr));
+      assertEquals(actual.millis(), expected);
+    });
   });
 
   describe("unix()", () => {
@@ -262,6 +269,89 @@ describe("ChronoSpan", () => {
       assertEquals(
         ChronoSpan.fromMinutes(-420).toString(ChronoSpanFormat.TimeZone),
         "-0700",
+      );
+    });
+  });
+
+  describe("equals", () => {
+    it("should check whether two Chrono instance are equal", () => {
+      assertEquals(
+        true,
+        Chrono.from("2025-01-01").equal(Chrono.from("2025-01-01")),
+      );
+      assertEquals(
+        false,
+        Chrono.from("2025-01-01T09:00:00").equal(
+          Chrono.from("2025-01-01T09:00:01"),
+        ),
+      );
+    });
+  });
+
+  describe("before", () => {
+    it("should check whether a Chrono instance occurs before another", () => {
+      assertEquals(
+        true,
+        Chrono.from("2025-01-01").before(Chrono.from("2025-01-02")),
+      );
+      assertEquals(
+        false,
+        Chrono.from("2025-01-01T09:00:00").before(
+          Chrono.from("2025-01-01T00:00:00"),
+        ),
+      );
+    });
+  });
+
+  describe("beforeOrEqual", () => {
+    it("should check whether a Chrono instance occurs before or at the same time as another", () => {
+      assertEquals(
+        true,
+        Chrono.from("2025-01-01").beforeOrEqual(Chrono.from("2025-01-02")),
+      );
+      assertEquals(
+        true,
+        Chrono.from("2025-01-01").beforeOrEqual(Chrono.from("2025-01-01")),
+      );
+      assertEquals(
+        false,
+        Chrono.from("2025-01-01T09:00:00").beforeOrEqual(
+          Chrono.from("2025-01-01T00:00:00"),
+        ),
+      );
+    });
+  });
+
+  describe("after", () => {
+    it("should check whether a Chrono instance occurs after another", () => {
+      assertEquals(
+        true,
+        Chrono.from("2025-01-02").after(Chrono.from("2025-01-01")),
+      );
+      assertEquals(
+        false,
+        Chrono.from("2025-01-01T00:00:00").after(
+          Chrono.from("2025-01-01T09:00:00"),
+        ),
+      );
+    });
+  });
+
+  describe("afterOrEqual", () => {
+    it("should check whether a Chrono instance occurs before or at the same time as another", () => {
+      assertEquals(
+        true,
+        Chrono.from("2025-01-02").afterOrEqual(Chrono.from("2025-01-01")),
+      );
+      assertEquals(
+        true,
+        Chrono.from("2025-01-02").afterOrEqual(Chrono.from("2025-01-02")),
+      );
+      assertEquals(
+        false,
+        Chrono.from("2025-01-01T00:00:00").afterOrEqual(
+          Chrono.from("2025-01-01T09:00:00"),
+        ),
       );
     });
   });

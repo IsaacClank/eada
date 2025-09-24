@@ -43,3 +43,24 @@ export const UpsertBudgetContract = BudgetContract.partial({
   categories: true,
 });
 export type UpsertBudgetContract = z.infer<typeof UpsertBudgetContract>;
+
+export const TransactionContract = z.object({
+  id: z.uuid(),
+  timestamp: z.union([
+    z.iso.date(),
+    z.iso.datetime({ offset: true, local: true }),
+  ]),
+  budgetId: z.uuid(),
+  category: z.string(),
+  amount: z.number(),
+  note: z.string(),
+});
+export type TransactionContract = z.infer<typeof TransactionContract>;
+
+export const CreateTransactionContract = TransactionContract.partial({
+  id: true,
+  budgetId: true,
+  note: true,
+});
+// deno-fmt-ignore
+export type CreateTransactionContract = z.infer<typeof CreateTransactionContract>;

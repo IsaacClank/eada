@@ -10,12 +10,7 @@ import {
   UpsertBudgetContract,
 } from "../contracts.ts";
 import { Collection } from "../lib/collection.ts";
-
-enum ErrorCode {
-  InvalidBudgetState = "InvalidBudgetState",
-  BudgetNotFound = "BudgetNotFound",
-  InvalidTransactionCategoriesState = "InvalidTransactionCategoriesState",
-}
+import { ErrorCode } from "./common.ts";
 
 /**
  * @throw HttpException<Status.Conflict>

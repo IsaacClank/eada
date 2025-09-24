@@ -6,9 +6,11 @@ import {
   upsertBudget,
 } from "../services/budget.service.ts";
 import {
+  CreateTransactionContract,
   ReplaceBudgetCategoryContract,
   UpsertBudgetContract,
 } from "../contracts.ts";
+import { createTransactions } from "../services/transaction.service.ts";
 
 export const router = new Router();
 
@@ -28,4 +30,12 @@ router.put("/budget/:budgetId/category", async (c) => {
     .array()
     .parse(await c.request.body.json());
   c.response.body = replaceTransactionCategories(budgetId, data);
+});
+
+router.post("/budget/:budgetId/transaction", async (c) => {
+  const budgetId = c.params.budgetId;
+  const data = CreateTransactionContract
+    .array()
+    .parse(await c.request.body.json());
+  c.response.body = createTransactions(budgetId, data);
 });

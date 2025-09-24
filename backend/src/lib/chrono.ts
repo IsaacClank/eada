@@ -22,7 +22,7 @@ export class Chrono {
   }
 
   static from(
-    date: Date | string | number | bigint | Uint8Array | null,
+    date: Chrono | Date | string | number | bigint | Uint8Array | null,
   ): Chrono {
     if (typeof date === "string") {
       return Chrono.fromMillis(Date.parse(date));
@@ -34,6 +34,10 @@ export class Chrono {
       || date instanceof Uint8Array
     ) {
       return Chrono.fromUnix(Number(date));
+    }
+
+    if (date instanceof Chrono) {
+      return Chrono.fromMillis(date.millis());
     }
 
     if (date === null) {
@@ -119,6 +123,26 @@ export class Chrono {
 
   subtract(span: ChronoSpan): Chrono {
     return Chrono.fromMillis(this.millis() - span.milliseconds);
+  }
+
+  equal(that: Chrono) {
+    return this.millis() === that.millis();
+  }
+
+  before(that: Chrono) {
+    return this.millis() < that.millis();
+  }
+
+  beforeOrEqual(that: Chrono) {
+    return this.before(that) || this.equal(that);
+  }
+
+  after(that: Chrono) {
+    return this.millis() > that.millis();
+  }
+
+  afterOrEqual(that: Chrono) {
+    return this.after(that) || this.equal(that);
   }
 
   toString(format: ChronoFormat = ChronoFormat.Iso8061) {
