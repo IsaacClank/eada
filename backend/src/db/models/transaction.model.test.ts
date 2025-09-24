@@ -3,13 +3,11 @@ import { applyDbMigrations } from "../migration.ts";
 import { cleanUpDbAsync } from "../common.ts";
 import { Budget } from "./budget.model.ts";
 import { Chrono } from "../../lib/chrono.ts";
-import { TransactionCategory } from "./transaction-category.model.ts";
 import { Transaction } from "./transaction.model.ts";
 import { assertEquals } from "@std/assert/equals";
 
 describe("Transaction", () => {
   let budget!: Budget;
-  let transactionCategories: TransactionCategory[] = [];
 
   beforeEach(async () => {
     await applyDbMigrations();
@@ -22,43 +20,6 @@ describe("Transaction", () => {
       expectedUtilization: 30,
       expectedSurplus: 10,
     })[0];
-    transactionCategories = TransactionCategory.upsert(
-      TransactionCategory.from({
-        id: crypto.randomUUID(),
-        budgetId: budget.id,
-        name: "Salary",
-        type: "Income",
-        rate: 1,
-      }),
-      TransactionCategory.from({
-        id: crypto.randomUUID(),
-        budgetId: budget.id,
-        name: "Essential",
-        type: "Expense",
-        rate: 0.5,
-      }),
-      TransactionCategory.from({
-        id: crypto.randomUUID(),
-        budgetId: budget.id,
-        name: "Non-Essential",
-        type: "Expense",
-        rate: 0.5,
-      }),
-      TransactionCategory.from({
-        id: crypto.randomUUID(),
-        budgetId: budget.id,
-        name: "Saving",
-        type: "Utilization",
-        rate: 0.5,
-      }),
-      TransactionCategory.from({
-        id: crypto.randomUUID(),
-        budgetId: budget.id,
-        name: "Investment",
-        type: "Utilization",
-        rate: 0.5,
-      }),
-    );
   });
 
   afterEach(async () => {
@@ -70,11 +31,10 @@ describe("Transaction", () => {
       const expected: Transaction[] = [
         Transaction.from({
           id: crypto.randomUUID(),
+          budgetId: budget.id,
           timestamp: Chrono.from(Chrono.now().unix()),
           amount: 125000,
-          categoryId: transactionCategories
-            .find((c) => c.name === "Essential")!
-            .id,
+          category: "Essential",
           note: "",
         }),
       ];

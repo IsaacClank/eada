@@ -10,20 +10,23 @@ export class Transaction extends Model {
   static override Attributes: ModelAttributes = new Dict<string, string>([
     ["id", "id"],
     ["timestamp", "timestamp"],
-    ["categoryId", "category_id"],
+    ["budgetId", "budget_id"],
+    ["category", "category"],
     ["amount", "amount"],
     ["note", "note"],
   ]);
 
+  budgetId: string;
   timestamp: Chrono;
-  categoryId: string;
+  category: string;
   amount: number;
   note: string;
 
   constructor(data: Transaction) {
     super(data);
+    this.budgetId = data.budgetId;
     this.timestamp = data.timestamp;
-    this.categoryId = data.categoryId;
+    this.category = data.category;
     this.amount = data.amount;
     this.note = data.note;
   }
@@ -35,8 +38,9 @@ export class Transaction extends Model {
   static override fromDbRecord(output: DbRecord): Transaction {
     return this.from({
       id: String(output[this.column("id")]),
+      budgetId: String(output[this.column("budgetId")]),
       timestamp: Chrono.from(output[this.column("timestamp")]),
-      categoryId: String(output[this.column("categoryId")]),
+      category: String(output[this.column("category")]),
       amount: Number(output[this.column("amount")]),
       note: String(output[this.column("note")]),
     });
@@ -45,23 +49,26 @@ export class Transaction extends Model {
   static insert(...transactions: Transaction[]): number {
     const sqlBuilder = new StringBuilder()
       .a(`INSERT INTO [${this.Table}] (`)
-      .a(`id, timestamp, category_id, amount, note`)
+      .a(`id, budget_id, timestamp, category, amount, note`)
       .a(`)`).n()
-      .a("VALUES (?, ?, ?, ?, ?)").n()
+      .a("VALUES (?, ?, ?, ?, ?, ?)").n()
       .a(";");
 
     const statement = getDbConnection().prepare(sqlBuilder.get());
     let changedRecordCount: number = 0;
-    transactions.forEach(({ id, timestamp, categoryId, amount, note }) => {
-      const { changes } = statement.run(
-        id,
-        timestamp.unix(),
-        categoryId,
-        amount,
-        note,
-      );
-      changedRecordCount += Number(changes);
-    });
+    transactions.forEach(
+      ({ id, budgetId, timestamp, category, amount, note }) => {
+        const { changes } = statement.run(
+          id,
+          budgetId,
+          timestamp.unix(),
+          category,
+          amount,
+          note,
+        );
+        changedRecordCount += Number(changes);
+      },
+    );
     return changedRecordCount;
   }
 
