@@ -10,7 +10,11 @@ import {
   ReplaceBudgetCategoryContract,
   UpsertBudgetContract,
 } from "../contracts.ts";
-import { createTransactions } from "../services/transaction.service.ts";
+import {
+  createTransactions,
+  getTransactionsByBudgetId,
+} from "../services/transaction.service.ts";
+import z from "zod";
 
 export const router = new Router();
 
@@ -38,4 +42,9 @@ router.post("/budget/:budgetId/transaction", async (c) => {
     .array()
     .parse(await c.request.body.json());
   c.response.body = createTransactions(budgetId, data);
+});
+
+router.get("/budget/:budgetId/transaction", async (c) => {
+  const budgetId = await z.uuid().parseAsync(c.params.budgetId);
+  c.response.body = getTransactionsByBudgetId(budgetId);
 });

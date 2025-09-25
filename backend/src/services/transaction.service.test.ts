@@ -6,10 +6,13 @@ import {
   stub,
 } from "@std/testing/mock";
 import { Transaction } from "../db/models/transaction.model.ts";
-import { createTransactions } from "./transaction.service.ts";
+import {
+  createTransactions,
+  getTransactionsByBudgetId,
+} from "./transaction.service.ts";
 import { Chrono, ChronoFormat } from "../lib/chrono.ts";
 import { Budget } from "../db/models/budget.model.ts";
-import { assertIsError, assertThrows } from "@std/assert";
+import { assertEquals, assertIsError, assertThrows } from "@std/assert";
 import { HttpException } from "../lib/exception.ts";
 import { Status } from "@oak/common/status";
 
@@ -19,6 +22,7 @@ type BudgetStub = {
 
 type TransactionStub = {
   insert?: SpyLike;
+  getByBudgetId?: SpyLike;
 };
 
 describe("transaction.service", () => {
@@ -48,6 +52,13 @@ describe("transaction.service", () => {
       Transaction,
       "insert",
       (...data: Transaction[]) => data.length,
+    );
+
+    transactionStub.getByBudgetId?.restore();
+    transactionStub.getByBudgetId = stub(
+      Transaction,
+      "getByBudgetId",
+      (_) => [],
     );
   });
 
@@ -135,6 +146,61 @@ describe("transaction.service", () => {
         transactions.map((e) => ({ ...e })),
       );
       assertSpyCalls(transactionStub.insert!, 1);
+    });
+  });
+
+  describe("getTransactionsByBudgetId", () => {
+    it("should call Budget.getByBudgetIds", () => {
+      const budgetId = crypto.randomUUID();
+      getTransactionsByBudgetId(budgetId);
+      assertSpyCallArgs(budgetStub.getByIds!, 0, [budgetId]);
+      assertSpyCalls(budgetStub.getByIds!, 1);
+    });
+
+    describe("when budget cannot be found", () => {
+      beforeEach(() => {
+        budgetStub.getByIds?.restore();
+        budgetStub.getByIds = stub(
+          Budget,
+          "getByIds",
+          (..._: string[]) => [],
+        );
+      });
+
+      it("should throw", () => {
+        const actual = assertThrows(() =>
+          getTransactionsByBudgetId(crypto.randomUUID())
+        );
+        assertIsError(actual, HttpException<Status.NotFound>);
+      });
+    });
+
+    it("should call Transaction.getByBudgetId", () => {
+      getTransactionsByBudgetId(budget.id);
+      assertSpyCallArgs(transactionStub.getByBudgetId!, 0, [budget.id]);
+      assertSpyCalls(transactionStub.getByBudgetId!, 1);
+    });
+
+    it("should return result from Transaction.getByBudgetId", () => {
+      const expected = [
+        Transaction.from({
+          id: crypto.randomUUID(),
+          budgetId: budget.id,
+          timestamp: Chrono.from(budget.periodStart),
+          category: "Grocery",
+          amount: 100000,
+          note: "",
+        }),
+      ];
+
+      transactionStub.getByBudgetId?.restore();
+      transactionStub.getByBudgetId = stub(
+        Transaction,
+        "getByBudgetId",
+        (_) => expected,
+      );
+
+      assertEquals(getTransactionsByBudgetId(budget.id), expected);
     });
   });
 });

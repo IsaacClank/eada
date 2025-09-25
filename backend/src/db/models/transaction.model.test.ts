@@ -44,4 +44,23 @@ describe("Transaction", () => {
       assertEquals(actual, expected);
     });
   });
+
+  describe("getByBudgetId", () => {
+    it("should return transactions belonging to a specific budget", () => {
+      const expected: Transaction[] = [
+        Transaction.from({
+          id: crypto.randomUUID(),
+          budgetId: budget.id,
+          timestamp: Chrono.from("2025-01-02"),
+          amount: 125000,
+          category: "Essential",
+          note: "",
+        }),
+      ];
+      Transaction.insert(...expected);
+
+      const actual = Transaction.getByBudgetId(budget.id);
+      assertEquals(actual, expected);
+    });
+  });
 });

@@ -5,6 +5,7 @@ import { Transaction } from "../db/models/transaction.model.ts";
 import { Chrono } from "../lib/chrono.ts";
 import { HttpException } from "../lib/exception.ts";
 import { ErrorCode } from "./common.ts";
+import { collect } from "../lib/collection.ts";
 
 export function createTransactions(
   budgetId: string,
@@ -49,4 +50,19 @@ export function createTransactions(
       note: note ?? "",
     })),
   );
+}
+
+/**
+ * @throw HttpException<Status.NotFound> No budget can be found with the specified budget Id
+ */
+export function getTransactionsByBudgetId(budgetId: string) {
+  const budgets = collect(Budget.getByIds(budgetId));
+  if (budgets.isEmpty()) {
+    throw new HttpException<Status.NotFound>(
+      ErrorCode.BudgetNotFound,
+      "No budget can be found with the specified budget Id",
+    );
+  }
+
+  return Transaction.getByBudgetId(budgetId);
 }

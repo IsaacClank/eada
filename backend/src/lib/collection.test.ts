@@ -1,9 +1,16 @@
 import { describe } from "@std/testing/bdd";
 import { it } from "node:test";
-import { Collection } from "./collection.ts";
+import { collect, Collection } from "./collection.ts";
 import { assertEquals } from "@std/assert";
 
 describe("Collection", () => {
+  describe("isEmpty", () => {
+    it("should evaluate whether the collection is empty", () => {
+      assertEquals(true, collect([]).isEmpty());
+      assertEquals(false, collect([1, 2]).isEmpty());
+    });
+  });
+
   describe("groupBy", () => {
     it("groupBy", () => {
       const people = [

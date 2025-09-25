@@ -1,3 +1,7 @@
+export function collect<T>(items: T[]) {
+  return Collection.from(items);
+}
+
 export class Collection<T> {
   private _array: T[] = [];
 
@@ -11,6 +15,10 @@ export class Collection<T> {
 
   toArray() {
     return this._array;
+  }
+
+  isEmpty() {
+    return this._array.length < 1;
   }
 
   groupBy(keySelector: (item: T) => string | number) {

@@ -75,4 +75,16 @@ export class Transaction extends Model {
   static getByIds(...ids: string[]) {
     return super.getByIdsRaw(...ids).map((record) => this.fromDbRecord(record));
   }
+
+  static getByBudgetId(budgetId: string) {
+    const sqlBuilder = new StringBuilder()
+      .a("SELECT *").n()
+      .a(`FROM [${this.Table}]`).n()
+      .a(`WHERE [${this.Table}].budget_id = ?`).n()
+      .a(";");
+    return getDbConnection()
+      .prepare(sqlBuilder.get())
+      .all(budgetId)
+      .map((e) => this.fromDbRecord(e));
+  }
 }
