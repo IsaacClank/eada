@@ -13,7 +13,7 @@ import { Collection } from "../lib/collection.ts";
 import { ErrorCode } from "./common.ts";
 
 /**
- * @throw HttpException<Status.Conflict>
+ * @throws {HttpException<Status.Conflict>} income != expense + utilization + surplus
  */
 export function upsertBudget(data: UpsertBudgetContract): BudgetContract {
   if (
@@ -46,7 +46,7 @@ export function upsertBudget(data: UpsertBudgetContract): BudgetContract {
 }
 
 /**
- * @throw HttpException<Status.NotFound>
+ * @throws {HttpException<Status.NotFound>} No active budget found for the given timestamp
  */
 export function getBudgetAsOf(asOf: Chrono): BudgetContract {
   const budgets = Budget.getActiveAsOf(asOf);
@@ -71,7 +71,8 @@ export function getBudgetAsOf(asOf: Chrono): BudgetContract {
 }
 
 /**
- * @throw HttpException<Status.BadRequest>
+ * @throws {HttpException<Status.BadRequest>} Rates of the same type do not add up to 1
+ * @throws {HttpException<Status.BadRequest>} No existing budget could be found with the specified Id
  */
 export function replaceTransactionCategories(
   budgetId: string,
@@ -112,7 +113,7 @@ export function replaceTransactionCategories(
     };
   } catch (error) {
     if (error instanceof ForeignKeyConstraintException) {
-      throw new HttpException<Status.BadRequest>(
+      throw new HttpException<Status.NotFound>(
         ErrorCode.InvalidBudgetCategoryData,
         "No existing budget can be found with the given ID",
       );

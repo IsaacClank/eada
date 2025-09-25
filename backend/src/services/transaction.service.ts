@@ -7,6 +7,11 @@ import { HttpException } from "../lib/exception.ts";
 import { ErrorCode } from "./common.ts";
 import { collect } from "../lib/collection.ts";
 
+/**
+ * @throws {HttpException<Status.BadRequest>} budgetId != transactions[].budgetId
+ * @throws {HttpException<Status.NotFound>} No budget could be found for the specified Id
+ * @throws {HttpException<Status.Conflict>} Transaction timestmap falls outside of the specified budget active period
+ */
 export function createTransactions(
   budgetId: string,
   transactions: CreateTransactionContract[],
@@ -53,7 +58,7 @@ export function createTransactions(
 }
 
 /**
- * @throw HttpException<Status.NotFound> No budget can be found with the specified budget Id
+ * @throws {HttpException<Status.NotFound>} No budget can be found with the specified budget Id
  */
 export function getTransactionsByBudgetId(budgetId: string) {
   const budgets = collect(Budget.getByIds(budgetId));

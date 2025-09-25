@@ -315,7 +315,7 @@ describe("budget.service", () => {
         const actual = assertThrows(() =>
           replaceTransactionCategories(expectedBudget.id, [])
         );
-        assertIsError(actual, HttpException<Status.Conflict>);
+        assertIsError(actual, HttpException<Status.NotFound>);
       });
     });
 
