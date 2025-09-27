@@ -1,9 +1,14 @@
-import { SQLOutputValue } from "node:sqlite";
+import { DatabaseSync, SQLOutputValue } from "node:sqlite";
 import { Dict } from "../lib/dictionary.ts";
 import { Config } from "../config.ts";
 
 export type DbRecord = Record<string, SQLOutputValue>;
 export type ModelAttributes = Dict<string, string>;
+
+export interface Repository {
+  readonly table: string;
+  readonly conn: DatabaseSync;
+}
 
 export class RecordNotFoundException extends Error {
   constructor(cause?: string) {
