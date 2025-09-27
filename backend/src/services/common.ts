@@ -1,6 +1,9 @@
 export enum ErrorCode {
-  InvalidBudgetState = "InvalidBudgetState",
   BudgetNotFound = "BudgetNotFound",
+
+  InvalidBudgetData = "InvalidBudgetData",
   InvalidBudgetCategoryData = "InvalidBudgetCategoryData",
-  InvalidTransactionState = "InvalidTransactionState",
+  InvalidTransactionData = "InvalidTransactionData",
+
+  UnexpectedError = "UnexpectedError",
 }

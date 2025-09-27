@@ -1,9 +1,12 @@
-import { SQLOutputValue } from "node:sqlite";
-import { Dict } from "../lib/dictionary.ts";
+import { DatabaseSync, SQLOutputValue } from "node:sqlite";
 import { Config } from "../config.ts";
 
 export type DbRecord = Record<string, SQLOutputValue>;
-export type ModelAttributes = Dict<string, string>;
+
+export interface Repository {
+  readonly table: string;
+  readonly conn: DatabaseSync;
+}
 
 export class RecordNotFoundException extends Error {
   constructor(cause?: string) {
@@ -17,6 +20,9 @@ export class ForeignKeyConstraintException extends Error {
   }
 }
 
+/**
+ * Used for cleaning up test database.
+ */
 export async function cleanUpDbAsync() {
   const rawDbPath = Deno.env.get(Config.DbPath)!;
   const parsedDbPath = rawDbPath.replaceAll("~", Deno.env.get("HOME")!);

@@ -1,8 +1,6 @@
 import { Status } from "@oak/common/status";
 import { Chrono } from "../lib/chrono.ts";
 import { HttpException } from "../lib/exception.ts";
-import { Budget } from "../db/models/budget.model.ts";
-import { BudgetCategory } from "../db/models/budget-category.model.ts";
 import { ForeignKeyConstraintException } from "../db/common.ts";
 import {
   BudgetContract,
@@ -11,6 +9,9 @@ import {
 } from "../contracts.ts";
 import { Collection } from "../lib/collection.ts";
 import { ErrorCode } from "./common.ts";
+import { BudgetRepo } from "../db/repo/budget.repo.ts";
+import { getDbConnection } from "../db/connection.ts";
+import { BudgetCategoryRepo } from "../db/repo/budget-category.repo.ts";
 
 /**
  * @throws {HttpException<Status.Conflict>} income != expense + utilization + surplus
@@ -22,25 +23,43 @@ export function upsertBudget(data: UpsertBudgetContract): BudgetContract {
         + data.expectedSurplus != data.expectedIncome
   ) {
     throw new HttpException<Status.Conflict>(
-      ErrorCode.InvalidBudgetState.toString(),
+      ErrorCode.InvalidBudgetData,
       "Expected expense, utilization and surplus do not add up to expected income",
     );
   }
 
-  const budget = Budget.upsert({
+  const dbConn = getDbConnection();
+  const budgetRepo = new BudgetRepo(dbConn);
+  const budgetCategoryRepo = new BudgetCategoryRepo(dbConn);
+
+  const id = data.id ?? crypto.randomUUID();
+  budgetRepo.upsert({
     ...data,
-    id: data.id ?? crypto.randomUUID(),
+    id,
     periodStart: Chrono.from(data.periodStart),
     periodEnd: Chrono.from(data.periodEnd),
-  })[0];
-  const budgetTransactionCategories = BudgetCategory.getByBudgetId(
+  });
+
+  const budget = budgetRepo.getById(id);
+  if (budget == null) {
+    throw new HttpException<Status.InternalServerError>(
+      ErrorCode.UnexpectedError,
+      "Budget was created successfully but was not found in the database",
+    );
+  }
+
+  const budgetTransactionCategories = budgetCategoryRepo.getByBudgetId(
     budget.id,
   );
 
   return {
-    ...budget,
+    id: budget.id,
     periodStart: budget.periodStart.toString(),
     periodEnd: budget.periodEnd.toString(),
+    expectedExpense: budget.expectedExpense,
+    expectedIncome: budget.expectedIncome,
+    expectedSurplus: budget.expectedSurplus,
+    expectedUtilization: budget.expectedUtilization,
     categories: budgetTransactionCategories,
   };
 }
@@ -49,23 +68,30 @@ export function upsertBudget(data: UpsertBudgetContract): BudgetContract {
  * @throws {HttpException<Status.NotFound>} No active budget found for the given timestamp
  */
 export function getBudgetAsOf(asOf: Chrono): BudgetContract {
-  const budgets = Budget.getActiveAsOf(asOf);
-  if (budgets.length === 0) {
+  const dbConn = getDbConnection();
+  const budgetRepo = new BudgetRepo(dbConn);
+  const budgetCategoryRepo = new BudgetCategoryRepo(dbConn);
+
+  const budget = budgetRepo.getActiveAsOf(asOf);
+  if (budget == null) {
     throw new HttpException<Status.NotFound>(
-      ErrorCode.BudgetNotFound.toString(),
+      ErrorCode.BudgetNotFound,
       "No active budget found for the given datetime",
     );
   }
 
-  const budget = budgets[0];
-  const budgetTransactionCategories = BudgetCategory.getByBudgetId(
+  const budgetTransactionCategories = budgetCategoryRepo.getByBudgetId(
     budget.id,
   );
 
   return {
-    ...budget,
+    id: budget.id,
     periodStart: budget.periodStart.toString(),
     periodEnd: budget.periodEnd.toString(),
+    expectedExpense: budget.expectedExpense,
+    expectedIncome: budget.expectedIncome,
+    expectedSurplus: budget.expectedSurplus,
+    expectedUtilization: budget.expectedUtilization,
     categories: budgetTransactionCategories,
   };
 }
@@ -90,10 +116,14 @@ export function replaceTransactionCategories(
       );
     }
 
-    BudgetCategory.deleteByBudgetId(budgetId);
+    const dbConn = getDbConnection();
+    const budgetRepo = new BudgetRepo(dbConn);
+    const budgetCategoryRepo = new BudgetCategoryRepo(dbConn);
 
-    const categories = categoriesData.length
-      ? BudgetCategory.upsert(...categoriesData.map((c) => (
+    budgetCategoryRepo.deleteByBudgetId(budgetId);
+
+    if (categoriesData.length > 0) {
+      budgetCategoryRepo.upsertMany(...categoriesData.map((c) => (
         {
           id: c.id ?? crypto.randomUUID(),
           budgetId,
@@ -101,14 +131,26 @@ export function replaceTransactionCategories(
           type: c.type,
           rate: c.rate,
         }
-      )))
-      : [];
-    const budget = Budget.getByIds(budgetId)[0];
+      )));
+    }
+
+    const budget = budgetRepo.getById(budgetId);
+    if (budget == null) {
+      throw new HttpException<Status.InternalServerError>(
+        ErrorCode.UnexpectedError,
+        "Budget not found",
+      );
+    }
+    const categories = budgetCategoryRepo.getByBudgetId(budget.id);
 
     return {
-      ...budget,
+      id: budget.id,
       periodStart: budget.periodStart.toString(),
       periodEnd: budget.periodEnd.toString(),
+      expectedExpense: budget.expectedExpense,
+      expectedIncome: budget.expectedIncome,
+      expectedSurplus: budget.expectedSurplus,
+      expectedUtilization: budget.expectedUtilization,
       categories: categories,
     };
   } catch (error) {

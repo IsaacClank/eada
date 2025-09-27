@@ -4,7 +4,7 @@ import {
   assertNotEquals,
   assertThrows,
 } from "@std/assert";
-import { afterEach, beforeEach, describe, it } from "@std/testing/bdd";
+import { beforeEach, describe, it } from "@std/testing/bdd";
 import {
   assertSpyCallArgs,
   assertSpyCalls,
@@ -19,40 +19,48 @@ import {
 import { Chrono } from "../lib/chrono.ts";
 import { Status } from "@oak/common/status";
 import { HttpException } from "../lib/exception.ts";
-import { Budget } from "../db/models/budget.model.ts";
-import { BudgetCategory } from "../db/models/budget-category.model.ts";
 import { ForeignKeyConstraintException } from "../db/common.ts";
 import { BudgetContract, UpsertBudgetContract } from "../contracts.ts";
+import { BudgetDbRecord, BudgetRepo } from "../db/repo/budget.repo.ts";
+import {
+  BudgetCategoryDbRecord,
+  BudgetCategoryRepo,
+} from "../db/repo/budget-category.repo.ts";
+import { getDbConnection } from "../db/connection.ts";
+import { BudgetData } from "../models/budget.model.ts";
+import { BudgetCategoryData } from "../models/budget-category.model.ts";
 
-type BudgetStub = {
+type BudgetRepoStub = {
   upsert?: SpyLike;
   getActiveAsOf?: SpyLike;
-  getByIds?: SpyLike;
+  getById?: SpyLike;
 };
 
-type TransactionCategoryStub = {
+type BudgetCategoryRepoStub = {
   getByBudgetId?: SpyLike;
   deleteByBudgetId?: SpyLike;
-  upsert?: SpyLike;
+  upsertMany?: SpyLike;
 };
 
 describe("budget.service", () => {
-  describe("upsertBudget", () => {
-    const budgetStub: BudgetStub = {};
-    const transactionCategoryStub: TransactionCategoryStub = {};
+  const budgetRepoStub: BudgetRepoStub = {};
+  const budgetCategoryRepoStub: BudgetCategoryRepoStub = {};
 
+  describe("upsertBudget", () => {
     beforeEach(() => {
-      budgetStub.upsert = stub(Budget, "upsert", (...data) => data);
-      transactionCategoryStub.getByBudgetId = stub(
-        BudgetCategory,
+      stub(getDbConnection(), "function", () => ({}));
+      budgetRepoStub.upsert?.restore();
+      budgetRepoStub.upsert = stub(
+        BudgetRepo.prototype,
+        "upsert",
+        (_) => {},
+      );
+      budgetCategoryRepoStub.getByBudgetId?.restore();
+      budgetCategoryRepoStub.getByBudgetId = stub(
+        BudgetCategoryRepo.prototype,
         "getByBudgetId",
         (_) => [],
       );
-    });
-
-    afterEach(() => {
-      budgetStub.upsert?.restore();
-      transactionCategoryStub.getByBudgetId?.restore();
     });
 
     describe("when expected_expense + expected_utilization + expected_suplus != expected_income", () => {
@@ -85,18 +93,30 @@ describe("budget.service", () => {
       let actualBudget: BudgetContract;
 
       beforeEach(() => {
+        budgetRepoStub.getById?.restore();
+        budgetRepoStub.getById = stub(
+          BudgetRepo.prototype,
+          "getById",
+          (_) =>
+            ({
+              ...budgetData,
+              periodStart: Chrono.from(budgetData.periodStart),
+              periodEnd: Chrono.from(budgetData.periodEnd),
+            }) as BudgetDbRecord,
+        );
+
         actualBudget = upsertBudget(budgetData);
       });
 
       it("should call Budget.upsert with the specified budget ID", () => {
-        assertSpyCalls(budgetStub.upsert!, 1);
+        assertSpyCalls(budgetRepoStub.upsert!, 1);
         assertEquals(actualBudget.id, budgetData.id);
-        assertSpyCalls(transactionCategoryStub.getByBudgetId!, 1);
+        assertSpyCalls(budgetCategoryRepoStub.getByBudgetId!, 1);
       });
 
       it("should call TransactionCategory.getByBudgetId with the specified budget ID", () => {
-        assertSpyCalls(transactionCategoryStub.getByBudgetId!, 1);
-        assertSpyCallArgs(transactionCategoryStub.getByBudgetId!, 0, [
+        assertSpyCalls(budgetCategoryRepoStub.getByBudgetId!, 1);
+        assertSpyCallArgs(budgetCategoryRepoStub.getByBudgetId!, 0, [
           budgetData.id,
         ]);
       });
@@ -114,17 +134,29 @@ describe("budget.service", () => {
       let actualBudget: BudgetContract;
 
       beforeEach(() => {
+        budgetRepoStub.getById?.restore();
+        budgetRepoStub.getById = stub(
+          BudgetRepo.prototype,
+          "getById",
+          (_) =>
+            ({
+              ...budgetData,
+              periodStart: Chrono.from(budgetData.periodStart),
+              periodEnd: Chrono.from(budgetData.periodEnd),
+            }) as BudgetDbRecord,
+        );
+
         actualBudget = upsertBudget(budgetData);
       });
 
       it("should call Budget.upsert with a generated id", () => {
-        assertSpyCalls(budgetStub.upsert!, 1);
+        assertSpyCalls(budgetRepoStub.upsert!, 1);
         assertNotEquals(actualBudget.id, "");
       });
 
       it("should call TransactionCategory.getByBudgetId with the specified budget ID", () => {
-        assertSpyCalls(transactionCategoryStub.getByBudgetId!, 1);
-        assertSpyCallArgs(transactionCategoryStub.getByBudgetId!, 0, [
+        assertSpyCalls(budgetCategoryRepoStub.getByBudgetId!, 1);
+        assertSpyCallArgs(budgetCategoryRepoStub.getByBudgetId!, 0, [
           actualBudget.id,
         ]);
       });
@@ -132,18 +164,27 @@ describe("budget.service", () => {
   });
 
   describe("getBudgetAsOf", () => {
-    const budgetStub: BudgetStub = {};
-    const transactionCategoryStub: TransactionCategoryStub = {};
-
     beforeEach(() => {
-      budgetStub.getActiveAsOf?.restore();
-      budgetStub.getActiveAsOf = stub(Budget, "getActiveAsOf", (_) => []);
+      stub(getDbConnection(), "function", () => ({}));
+      budgetRepoStub.getActiveAsOf?.restore();
+      budgetRepoStub.getActiveAsOf = stub(
+        BudgetRepo.prototype,
+        "getActiveAsOf",
+        (_) => null,
+      );
+
+      budgetCategoryRepoStub.getByBudgetId?.restore();
+      budgetCategoryRepoStub.getByBudgetId = stub(
+        BudgetCategoryRepo.prototype,
+        "getByBudgetId",
+        (_) => [],
+      );
     });
 
     it("should call Budget.getActiveAsOf", () => {
       const asOf = Chrono.from("2025-01-15");
       assertThrows(() => getBudgetAsOf(asOf));
-      assertSpyCallArgs(budgetStub.getActiveAsOf!, 0, [asOf]);
+      assertSpyCallArgs(budgetRepoStub.getActiveAsOf!, 0, [asOf]);
     });
 
     describe("when budget does not exists", () => {
@@ -156,7 +197,7 @@ describe("budget.service", () => {
     });
 
     describe("when budget exists", () => {
-      const existingBudget: Budget = {
+      const existingBudget: BudgetData = {
         id: crypto.randomUUID(),
         periodStart: Chrono.from("2025-01-01"),
         periodEnd: Chrono.from("2025-02-01"),
@@ -168,16 +209,16 @@ describe("budget.service", () => {
       let actual: BudgetContract;
 
       beforeEach(() => {
-        budgetStub.getActiveAsOf?.restore();
-        budgetStub.getActiveAsOf = stub(
-          Budget,
+        budgetRepoStub.getActiveAsOf?.restore();
+        budgetRepoStub.getActiveAsOf = stub(
+          BudgetRepo.prototype,
           "getActiveAsOf",
-          (_) => [existingBudget],
+          (_) => existingBudget as BudgetDbRecord,
         );
 
-        transactionCategoryStub.getByBudgetId?.restore();
-        transactionCategoryStub.getByBudgetId = stub(
-          BudgetCategory,
+        budgetCategoryRepoStub.getByBudgetId?.restore();
+        budgetCategoryRepoStub.getByBudgetId = stub(
+          BudgetCategoryRepo.prototype,
           "getByBudgetId",
           (_) => [],
         );
@@ -187,11 +228,11 @@ describe("budget.service", () => {
 
       it("should call TransactionCategory.getByBudgetId", () => {
         assertSpyCallArgs(
-          transactionCategoryStub.getByBudgetId!,
+          budgetCategoryRepoStub.getByBudgetId!,
           0,
           [existingBudget.id],
         );
-        assertSpyCalls(transactionCategoryStub.getByBudgetId!, 1);
+        assertSpyCalls(budgetCategoryRepoStub.getByBudgetId!, 1);
       });
 
       it("should return budget", () => {
@@ -201,10 +242,7 @@ describe("budget.service", () => {
   });
 
   describe("replaceTransactionCategories", () => {
-    const budgetStub: BudgetStub = {};
-    const transactionCategoryStub: TransactionCategoryStub = {};
-
-    const expectedBudget = Budget.from({
+    const expectedBudget: BudgetData = {
       id: crypto.randomUUID(),
       periodStart: Chrono.from("2025-01-01"),
       periodEnd: Chrono.from("2025-01-01"),
@@ -212,53 +250,59 @@ describe("budget.service", () => {
       expectedExpense: 50,
       expectedUtilization: 30,
       expectedSurplus: 20,
-    });
-    const expectedTransactionCategories = [
-      BudgetCategory.from({
+    };
+    const expectedBudgetCategories: BudgetCategoryData[] = [
+      {
         id: crypto.randomUUID(),
         budgetId: expectedBudget.id,
         name: "Salary",
         type: "Income",
         rate: 1,
-      }),
-      BudgetCategory.from({
+      },
+      {
         id: crypto.randomUUID(),
         budgetId: expectedBudget.id,
         name: "All expense",
         type: "Expense",
         rate: 1,
-      }),
-      BudgetCategory.from({
+      },
+      {
         id: crypto.randomUUID(),
         budgetId: expectedBudget.id,
         name: "Investment & Saving",
         type: "Utilization",
         rate: 1,
-      }),
+      },
     ];
 
     beforeEach(() => {
-      budgetStub.getByIds?.restore();
-      budgetStub.getByIds = stub(
-        Budget,
-        "getByIds",
-        (..._) => [expectedBudget],
+      stub(getDbConnection(), "function", () => ({}));
+      budgetRepoStub.getById?.restore();
+      budgetRepoStub.getById = stub(
+        BudgetRepo.prototype,
+        "getById",
+        (_) => expectedBudget as BudgetDbRecord,
       );
 
-      transactionCategoryStub.deleteByBudgetId?.restore();
-      transactionCategoryStub.deleteByBudgetId = stub(
-        BudgetCategory,
+      budgetCategoryRepoStub.deleteByBudgetId?.restore();
+      budgetCategoryRepoStub.deleteByBudgetId = stub(
+        BudgetCategoryRepo.prototype,
         "deleteByBudgetId",
-        (_) => {},
+        (_) => expectedBudgetCategories.length,
       );
 
-      transactionCategoryStub.upsert?.restore();
-      transactionCategoryStub.upsert = stub(
-        BudgetCategory,
-        "upsert",
-        (...data) => {
-          return data;
-        },
+      budgetCategoryRepoStub.upsertMany?.restore();
+      budgetCategoryRepoStub.upsertMany = stub(
+        BudgetCategoryRepo.prototype,
+        "upsertMany",
+        (_) => expectedBudgetCategories.length,
+      );
+
+      budgetCategoryRepoStub.getByBudgetId?.restore();
+      budgetCategoryRepoStub.getByBudgetId = stub(
+        BudgetCategoryRepo.prototype,
+        "getByBudgetId",
+        (_) => expectedBudgetCategories as BudgetCategoryDbRecord[],
       );
     });
 
@@ -279,7 +323,7 @@ describe("budget.service", () => {
 
     it("should call TransactionCategory.deleteByBudgetId", () => {
       replaceTransactionCategories(expectedBudget.id, []);
-      assertSpyCallArgs(transactionCategoryStub.deleteByBudgetId!, 0, [
+      assertSpyCallArgs(budgetCategoryRepoStub.deleteByBudgetId!, 0, [
         expectedBudget.id,
       ]);
     });
@@ -287,23 +331,23 @@ describe("budget.service", () => {
     describe("when no categories are specified", () => {
       it("should not call TransactionCategory.upsert", () => {
         replaceTransactionCategories(expectedBudget.id, []);
-        assertSpyCalls(transactionCategoryStub.upsert!, 0);
+        assertSpyCalls(budgetCategoryRepoStub.upsertMany!, 0);
       });
     });
 
     it("should call TransactionCategory.upsert", () => {
       replaceTransactionCategories(
         expectedBudget.id,
-        expectedTransactionCategories,
+        expectedBudgetCategories,
       );
-      assertSpyCalls(transactionCategoryStub.upsert!, 1);
+      assertSpyCalls(budgetCategoryRepoStub.upsertMany!, 1);
     });
 
     describe("when using a non-existent budget ID", () => {
       beforeEach(() => {
-        transactionCategoryStub.deleteByBudgetId?.restore();
-        transactionCategoryStub.deleteByBudgetId = stub(
-          BudgetCategory,
+        budgetCategoryRepoStub.deleteByBudgetId?.restore();
+        budgetCategoryRepoStub.deleteByBudgetId = stub(
+          BudgetCategoryRepo.prototype,
           "deleteByBudgetId",
           (_) => {
             throw new ForeignKeyConstraintException();
@@ -321,7 +365,7 @@ describe("budget.service", () => {
 
     it("should call Budget.getByIds", () => {
       replaceTransactionCategories(expectedBudget.id, []);
-      assertSpyCallArgs(budgetStub.getByIds!, 0, [expectedBudget.id]);
+      assertSpyCallArgs(budgetRepoStub.getById!, 0, [expectedBudget.id]);
     });
 
     it("should return updated budget data", () => {
@@ -329,11 +373,11 @@ describe("budget.service", () => {
         ...expectedBudget,
         periodStart: expectedBudget.periodStart.toString(),
         periodEnd: expectedBudget.periodEnd.toString(),
-        categories: expectedTransactionCategories.map((x) => ({ ...x })),
+        categories: expectedBudgetCategories.map((x) => ({ ...x })),
       };
       const actual = replaceTransactionCategories(
         expectedBudget.id,
-        expectedTransactionCategories,
+        expectedBudgetCategories,
       );
       assertEquals(actual, expected);
     });

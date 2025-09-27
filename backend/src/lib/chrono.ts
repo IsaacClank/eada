@@ -1,4 +1,4 @@
-import { ifNaNThen } from "./common.ts";
+import { IEqual, ifNaNThen } from "./common.ts";
 
 export type ChronoUnit =
   | "Year"
@@ -14,7 +14,7 @@ export enum ChronoFormat {
   Iso8061,
 }
 
-export class Chrono {
+export class Chrono implements IEqual<Chrono> {
   private date: Date;
 
   constructor(date?: Date) {

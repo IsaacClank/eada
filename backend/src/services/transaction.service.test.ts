@@ -5,31 +5,38 @@ import {
   SpyLike,
   stub,
 } from "@std/testing/mock";
-import { Transaction } from "../db/models/transaction.model.ts";
 import {
   createTransactions,
   getTransactionsByBudgetId,
 } from "./transaction.service.ts";
 import { Chrono, ChronoFormat } from "../lib/chrono.ts";
-import { Budget } from "../db/models/budget.model.ts";
 import { assertEquals, assertIsError, assertThrows } from "@std/assert";
 import { HttpException } from "../lib/exception.ts";
 import { Status } from "@oak/common/status";
+import { BudgetDbRecord, BudgetRepo } from "../db/repo/budget.repo.ts";
+import {
+  TransactionDbRecord,
+  TransactionRepo,
+} from "../db/repo/transaction.repo.ts";
+import { getDbConnection } from "../db/connection.ts";
+import { TransactionData } from "../models/transaction.model.ts";
+import { BudgetData } from "../models/budget.model.ts";
 
-type BudgetStub = {
-  getByIds?: SpyLike;
+type BudgetRepoStub = {
+  getById?: SpyLike;
 };
 
-type TransactionStub = {
+type TransactionRepoStub = {
   insert?: SpyLike;
   getByBudgetId?: SpyLike;
 };
 
 describe("transaction.service", () => {
-  const budgetStub: BudgetStub = {};
-  const transactionStub: TransactionStub = {};
+  stub(getDbConnection(), "function", () => ({}));
+  const budgetRepoStub: BudgetRepoStub = {};
+  const transactionRepoStub: TransactionRepoStub = {};
 
-  const budget = Budget.from({
+  const budget: BudgetData = {
     id: crypto.randomUUID(),
     periodStart: Chrono.from("2025-01-01"),
     periodEnd: Chrono.from("2025-02-01"),
@@ -37,26 +44,26 @@ describe("transaction.service", () => {
     expectedExpense: 60,
     expectedUtilization: 30,
     expectedSurplus: 10,
-  });
+  };
 
   beforeEach(() => {
-    budgetStub.getByIds?.restore();
-    budgetStub.getByIds = stub(
-      Budget,
-      "getByIds",
-      (..._: string[]) => [budget],
+    budgetRepoStub.getById?.restore();
+    budgetRepoStub.getById = stub(
+      BudgetRepo.prototype,
+      "getById",
+      (_) => budget as BudgetDbRecord,
     );
 
-    transactionStub.insert?.restore();
-    transactionStub.insert = stub(
-      Transaction,
-      "insert",
-      (...data: Transaction[]) => data.length,
+    transactionRepoStub.insert?.restore();
+    transactionRepoStub.insert = stub(
+      TransactionRepo.prototype,
+      "insertMany",
+      (...data: TransactionData[]) => data.length,
     );
 
-    transactionStub.getByBudgetId?.restore();
-    transactionStub.getByBudgetId = stub(
-      Transaction,
+    transactionRepoStub.getByBudgetId?.restore();
+    transactionRepoStub.getByBudgetId = stub(
+      TransactionRepo.prototype,
       "getByBudgetId",
       (_) => [],
     );
@@ -86,13 +93,17 @@ describe("transaction.service", () => {
           amount: 100,
         },
       ]);
-      assertSpyCallArgs(budgetStub.getByIds!, 0, [budget.id]);
-      assertSpyCalls(budgetStub.getByIds!, 1);
+      assertSpyCallArgs(budgetRepoStub.getById!, 0, [budget.id]);
+      assertSpyCalls(budgetRepoStub.getById!, 1);
     });
 
     describe("when budget does not exists", () => {
-      budgetStub.getByIds?.restore();
-      budgetStub.getByIds = stub(Budget, "getByIds", (..._) => []);
+      budgetRepoStub.getById?.restore();
+      budgetRepoStub.getById = stub(
+        BudgetRepo.prototype,
+        "getById",
+        (..._) => null,
+      );
 
       it("should throw", () => {
         const actualError = assertThrows(() =>
@@ -123,15 +134,15 @@ describe("transaction.service", () => {
     });
 
     it("should call Transaction.insert", () => {
-      const transactions = [
-        Transaction.from({
+      const transactions: TransactionData[] = [
+        {
           id: crypto.randomUUID(),
           budgetId: budget.id,
           timestamp: Chrono.from("2025-01-05"),
           category: "Essentials",
           amount: 100000,
           note: "",
-        }),
+        },
       ];
       createTransactions(
         budget.id,
@@ -141,11 +152,11 @@ describe("transaction.service", () => {
         })),
       );
       assertSpyCallArgs(
-        transactionStub.insert!,
+        transactionRepoStub.insert!,
         0,
         transactions.map((e) => ({ ...e })),
       );
-      assertSpyCalls(transactionStub.insert!, 1);
+      assertSpyCalls(transactionRepoStub.insert!, 1);
     });
   });
 
@@ -153,17 +164,17 @@ describe("transaction.service", () => {
     it("should call Budget.getByBudgetIds", () => {
       const budgetId = crypto.randomUUID();
       getTransactionsByBudgetId(budgetId);
-      assertSpyCallArgs(budgetStub.getByIds!, 0, [budgetId]);
-      assertSpyCalls(budgetStub.getByIds!, 1);
+      assertSpyCallArgs(budgetRepoStub.getById!, 0, [budgetId]);
+      assertSpyCalls(budgetRepoStub.getById!, 1);
     });
 
     describe("when budget cannot be found", () => {
       beforeEach(() => {
-        budgetStub.getByIds?.restore();
-        budgetStub.getByIds = stub(
-          Budget,
-          "getByIds",
-          (..._: string[]) => [],
+        budgetRepoStub.getById?.restore();
+        budgetRepoStub.getById = stub(
+          BudgetRepo.prototype,
+          "getById",
+          (_) => null,
         );
       });
 
@@ -177,27 +188,27 @@ describe("transaction.service", () => {
 
     it("should call Transaction.getByBudgetId", () => {
       getTransactionsByBudgetId(budget.id);
-      assertSpyCallArgs(transactionStub.getByBudgetId!, 0, [budget.id]);
-      assertSpyCalls(transactionStub.getByBudgetId!, 1);
+      assertSpyCallArgs(transactionRepoStub.getByBudgetId!, 0, [budget.id]);
+      assertSpyCalls(transactionRepoStub.getByBudgetId!, 1);
     });
 
     it("should return result from Transaction.getByBudgetId", () => {
-      const expected = [
-        Transaction.from({
+      const expected: TransactionData[] = [
+        {
           id: crypto.randomUUID(),
           budgetId: budget.id,
           timestamp: Chrono.from(budget.periodStart),
           category: "Grocery",
           amount: 100000,
           note: "",
-        }),
+        },
       ];
 
-      transactionStub.getByBudgetId?.restore();
-      transactionStub.getByBudgetId = stub(
-        Transaction,
+      transactionRepoStub.getByBudgetId?.restore();
+      transactionRepoStub.getByBudgetId = stub(
+        TransactionRepo.prototype,
         "getByBudgetId",
-        (_) => expected,
+        (_) => expected as TransactionDbRecord[],
       );
 
       assertEquals(getTransactionsByBudgetId(budget.id), expected);

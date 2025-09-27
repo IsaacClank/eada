@@ -1,11 +1,11 @@
 import { Status } from "@oak/common/status";
 import { CreateTransactionContract } from "../contracts.ts";
-import { Budget } from "../db/models/budget.model.ts";
-import { Transaction } from "../db/models/transaction.model.ts";
 import { Chrono } from "../lib/chrono.ts";
 import { HttpException } from "../lib/exception.ts";
 import { ErrorCode } from "./common.ts";
-import { collect } from "../lib/collection.ts";
+import { getDbConnection } from "../db/connection.ts";
+import { BudgetRepo } from "../db/repo/budget.repo.ts";
+import { TransactionRepo } from "../db/repo/transaction.repo.ts";
 
 /**
  * @throws {HttpException<Status.BadRequest>} budgetId != transactions[].budgetId
@@ -21,12 +21,16 @@ export function createTransactions(
   );
   if (conflictingBudgetId) {
     throw new HttpException<Status.BadRequest>(
-      ErrorCode.InvalidTransactionState,
+      ErrorCode.InvalidTransactionData,
       "Conflicting budget ID argument",
     );
   }
 
-  const budget = Budget.getByIds(budgetId)[0];
+  const dbConn = getDbConnection();
+  const budgetRepo = new BudgetRepo(dbConn);
+  const transactionRepo = new TransactionRepo(dbConn);
+
+  const budget = budgetRepo.getById(budgetId);
   if (budget == null) {
     throw new HttpException<Status.NotFound>(
       ErrorCode.BudgetNotFound,
@@ -40,12 +44,12 @@ export function createTransactions(
   );
   if (anyTimestampOutsideBudgetActivePeriod) {
     throw new HttpException<Status.Conflict>(
-      ErrorCode.InvalidTransactionState,
+      ErrorCode.InvalidTransactionData,
       "Transaction timestamp falls outside of specified budget active period",
     );
   }
 
-  return Transaction.insert(
+  return transactionRepo.insertMany(
     ...transactions.map(({ id, timestamp, category, amount, note }) => ({
       id: id ?? crypto.randomUUID(),
       budgetId,
@@ -61,13 +65,17 @@ export function createTransactions(
  * @throws {HttpException<Status.NotFound>} No budget can be found with the specified budget Id
  */
 export function getTransactionsByBudgetId(budgetId: string) {
-  const budgets = collect(Budget.getByIds(budgetId));
-  if (budgets.isEmpty()) {
+  const dbConn = getDbConnection();
+  const budgetRepo = new BudgetRepo(dbConn);
+  const transactionRepo = new TransactionRepo(dbConn);
+
+  const budget = budgetRepo.getById(budgetId);
+  if (budget == null) {
     throw new HttpException<Status.NotFound>(
       ErrorCode.BudgetNotFound,
       "No budget can be found with the specified budget Id",
     );
   }
 
-  return Transaction.getByBudgetId(budgetId);
+  return transactionRepo.getByBudgetId(budgetId);
 }
