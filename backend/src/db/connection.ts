@@ -9,6 +9,6 @@ export function getDbConnection() {
   const rawDbPath = Deno.env.get(Config.DbPath)!;
   const parsedDbPath = rawDbPath.replaceAll("~", Deno.env.get("HOME")!);
   const parsedDbPathDir = parsedDbPath.split("/").slice(0, -1).join("/");
-  Deno.mkdir(parsedDbPathDir, { recursive: true });
+  Deno.mkdirSync(parsedDbPathDir, { recursive: true });
   return new DatabaseSync(parsedDbPath);
 }
