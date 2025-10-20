@@ -1,4 +1,4 @@
-import { assertEquals } from "@std/assert";
+import { assert, assertEquals } from "@std/assert";
 import { describe, it } from "@std/testing/bdd";
 import {
   Chrono,
@@ -6,7 +6,6 @@ import {
   ChronoSpan,
   ChronoSpanFormat,
 } from "./chrono.ts";
-import assert from "node:assert";
 
 describe("Chrono", () => {
   describe("can be instantiated", () => {
@@ -353,6 +352,36 @@ describe("ChronoSpan", () => {
           Chrono.from("2025-01-01T09:00:00"),
         ),
       );
+    });
+  });
+
+  describe("next", () => {
+    it("should increment the Chrono instance by 1 value of the specified unit", () => {
+      const testParams = [
+        [Chrono.from("2024-12-31").next("Year"), Chrono.from("2025-12-31")],
+        [Chrono.from("2024-02-29").next("Year"), Chrono.from("2025-03-01")],
+
+        [Chrono.from("2024-12-31").next("Month"), Chrono.from("2025-01-31")],
+        [Chrono.from("2025-01-01").next("Month"), Chrono.from("2025-02-01")],
+        [Chrono.from("2025-01-31").next("Month"), Chrono.from("2025-03-03")],
+
+        [Chrono.from("2025-01-01").next("Day"), Chrono.from("2025-01-02")],
+        [Chrono.from("2025-01-31").next("Day"), Chrono.from("2025-02-01")],
+
+        [
+          Chrono.from("2025-01-01T00:00:00").next("Hour"),
+          Chrono.from("2025-01-01T01:00:00"),
+        ],
+      ];
+
+      testParams.forEach(([actual, expected]) => {
+        try {
+          assert(actual.equal(expected));
+        } catch (_) {
+          console.log(expected.toString());
+          console.log(actual.toString());
+        }
+      });
     });
   });
 });

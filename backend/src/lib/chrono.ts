@@ -29,9 +29,9 @@ export class Chrono implements IEqual<Chrono> {
     }
 
     if (
-      typeof date === "number"
-      || typeof date === "bigint"
-      || date instanceof Uint8Array
+      typeof date === "number" ||
+      typeof date === "bigint" ||
+      date instanceof Uint8Array
     ) {
       return Chrono.fromUnix(Number(date));
     }
@@ -123,6 +123,41 @@ export class Chrono implements IEqual<Chrono> {
 
   subtract(span: ChronoSpan): Chrono {
     return Chrono.fromMillis(this.millis() - span.milliseconds);
+  }
+
+  next(unit: ChronoUnit): Chrono {
+    if (unit === "Year" || unit === "Month") {
+      const newDate = new Date(
+        unit === "Year" ? this.year() + 1 : this.year(),
+        unit === "Month" ? this.month() + 1 : this.month(),
+        this.day(),
+        this.hours(),
+        this.seconds(),
+        this.milliseconds(),
+      );
+
+      const next = Chrono.from(newDate);
+      return next;
+    }
+
+    let span: ChronoSpan;
+    switch (unit) {
+      case "Day":
+        span = ChronoSpan.fromDays(1);
+        break;
+      case "Hour":
+        span = ChronoSpan.fromHours(1);
+        break;
+      case "Minute":
+        span = ChronoSpan.fromMinutes(1);
+        break;
+      case "Second":
+        span = ChronoSpan.fromSeconds(1);
+        break;
+      default:
+        throw new Error(`Unsupported unit: {unit}`);
+    }
+    return this.add(span);
   }
 
   equal(that: Chrono) {
@@ -225,13 +260,13 @@ export class ChronoSpan {
       Math.floor(this.minutes),
     );
     const seconds = ifNaNThen(
-      this.seconds
-        % (((days * 24 + hours) * 60 + minutes) * 60),
+      this.seconds %
+        (((days * 24 + hours) * 60 + minutes) * 60),
       Math.floor(this.seconds),
     );
     const milliseconds = ifNaNThen(
-      this.milliseconds
-        % ((((days * 24 + hours) * 60 + minutes) * 60 + seconds) * 1000),
+      this.milliseconds %
+        ((((days * 24 + hours) * 60 + minutes) * 60 + seconds) * 1000),
       Math.floor(this.milliseconds),
     );
 
