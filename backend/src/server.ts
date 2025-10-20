@@ -6,6 +6,7 @@ import { $ZodError, $ZodIssueBase } from "zod/v4/core";
 
 import * as commonApi from "./api/common.api.ts";
 import * as budgetApi from "./api/budget.api.ts";
+import * as backupApi from "./api/backup.api.ts";
 
 export const server = new Application();
 
@@ -57,3 +58,4 @@ server.use(async ({ response: res }, next) => {
 // Routes
 server.use(commonApi.router.routes(), commonApi.router.allowedMethods());
 server.use(budgetApi.router.routes(), budgetApi.router.allowedMethods());
+server.use(backupApi.router.routes(), budgetApi.router.allowedMethods());
