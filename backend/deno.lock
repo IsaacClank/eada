@@ -10,6 +10,7 @@
     "jsr:@std/bytes@1": "1.0.6",
     "jsr:@std/cli@^1.0.21": "1.0.21",
     "jsr:@std/crypto@1": "1.0.5",
+    "jsr:@std/csv@^1.0.6": "1.0.6",
     "jsr:@std/data-structures@^1.0.9": "1.0.9",
     "jsr:@std/encoding@1": "1.0.10",
     "jsr:@std/encoding@^1.0.10": "1.0.10",
@@ -26,6 +27,7 @@
     "jsr:@std/path@1": "1.1.2",
     "jsr:@std/path@^1.1.1": "1.1.2",
     "jsr:@std/streams@^1.0.10": "1.0.11",
+    "jsr:@std/streams@^1.0.9": "1.0.11",
     "jsr:@std/testing@^1.0.15": "1.0.15",
     "npm:@types/node@*": "22.15.15",
     "npm:path-to-regexp@^6.3.0": "6.3.0",
@@ -73,6 +75,12 @@
     "@std/crypto@1.0.5": {
       "integrity": "0dcfbb319fe0bba1bd3af904ceb4f948cde1b92979ec1614528380ed308a3b40"
     },
+    "@std/csv@1.0.6": {
+      "integrity": "52ef0e62799a0028d278fa04762f17f9bd263fad9a8e7f98c14fbd371d62d9fd",
+      "dependencies": [
+        "jsr:@std/streams@^1.0.9"
+      ]
+    },
     "@std/data-structures@1.0.9": {
       "integrity": "033d6e17e64bf1f84a614e647c1b015fa2576ae3312305821e1a4cb20674bb4d"
     },
@@ -103,7 +111,7 @@
         "jsr:@std/media-types@^1.1.0",
         "jsr:@std/net",
         "jsr:@std/path@^1.1.1",
-        "jsr:@std/streams"
+        "jsr:@std/streams@^1.0.10"
       ]
     },
     "@std/internal@1.0.10": {
@@ -158,6 +166,7 @@
       "jsr:@oak/commons@^1.0.1",
       "jsr:@oak/oak@^17.1.6",
       "jsr:@std/assert@1",
+      "jsr:@std/csv@^1.0.6",
       "jsr:@std/http@1",
       "jsr:@std/testing@^1.0.15",
       "npm:zod@^4.1.9"
