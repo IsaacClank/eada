@@ -1,11 +1,12 @@
 import { DatabaseSync, SQLOutputValue } from "node:sqlite";
-import { ForeignKeyConstraintException, Repository } from "../common.ts";
+
+import { ForeignKeyConstraintException, Repository } from "@src/db/common.ts";
+import { IEqual } from "@src/lib/common.ts";
+import { StringBuilder } from "@src/lib/string.ts";
 import {
   BudgetCategoryData,
   TransactionType,
-} from "../../models/budget-category.model.ts";
-import { IEqual } from "../../lib/common.ts";
-import { StringBuilder } from "../../lib/string.ts";
+} from "@src/models/budget-category.model.ts";
 
 export class BudgetCategoryRepo implements Repository {
   private static readonly Table: string = "budget_category";
@@ -62,6 +63,17 @@ export class BudgetCategoryRepo implements Repository {
 
       throw error;
     }
+  }
+
+  getAll(): BudgetCategoryDbRecord[] {
+    const sqlBuilder = new StringBuilder()
+      .a("SELECT *").n()
+      .a(`FROM [${this.table}]`).n()
+      .a(";");
+    return this.conn
+      .prepare(sqlBuilder.get())
+      .all()
+      .map((record) => new BudgetCategoryDbRecord(record));
   }
 
   getByBudgetId(budgetId: string): BudgetCategoryDbRecord[] {
@@ -133,5 +145,15 @@ export class BudgetCategoryDbRecord
       && this.name === other.name
       && this.type === other.type
       && this.rate === other.rate;
+  }
+
+  data(): BudgetCategoryData {
+    return {
+      id: this.id,
+      budgetId: this.budgetId,
+      name: this.name,
+      type: this.type,
+      rate: this.rate,
+    };
   }
 }

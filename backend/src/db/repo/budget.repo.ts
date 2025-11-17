@@ -1,9 +1,10 @@
 import { DatabaseSync } from "node:sqlite";
-import { Chrono } from "../../lib/chrono.ts";
-import { StringBuilder } from "../../lib/string.ts";
-import { BudgetData } from "../../models/budget.model.ts";
-import { IEqual } from "../../lib/common.ts";
-import { DbRecord, Repository } from "../common.ts";
+
+import { DbRecord, Repository } from "@src/db/common.ts";
+import { Chrono } from "@src/lib/chrono.ts";
+import { IEqual } from "@src/lib/common.ts";
+import { StringBuilder } from "@src/lib/string.ts";
+import { BudgetData } from "@src/models/budget.model.ts";
 
 export class BudgetRepo implements Repository {
   private static readonly Table = "budget";
@@ -45,6 +46,17 @@ export class BudgetRepo implements Repository {
         budget.expectedUtilization,
         budget.expectedSurplus,
       );
+  }
+
+  getAll(): BudgetDbRecord[] {
+    const sqlBuilder = new StringBuilder()
+      .a("SELECT *").n()
+      .a(`FROM [${this.table}]`).n()
+      .a(";");
+    return this.conn
+      .prepare(sqlBuilder.get())
+      .all()
+      .map((record) => new BudgetDbRecord(record));
   }
 
   getById(id: string): BudgetDbRecord | null {
@@ -140,5 +152,17 @@ export class BudgetDbRecord implements BudgetData, IEqual<BudgetData> {
       && this.expectedExpense === other.expectedExpense
       && this.expectedUtilization === other.expectedUtilization
       && this.expectedSurplus === other.expectedSurplus;
+  }
+
+  data(): BudgetData {
+    return {
+      id: this.id,
+      periodStart: this.periodStart,
+      periodEnd: this.periodEnd,
+      expectedIncome: this.expectedIncome,
+      expectedExpense: this.expectedExpense,
+      expectedUtilization: this.expectedUtilization,
+      expectedSurplus: this.expectedSurplus,
+    };
   }
 }

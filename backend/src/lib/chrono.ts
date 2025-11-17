@@ -29,9 +29,9 @@ export class Chrono implements IEqual<Chrono> {
     }
 
     if (
-      typeof date === "number" ||
-      typeof date === "bigint" ||
-      date instanceof Uint8Array
+      typeof date === "number"
+      || typeof date === "bigint"
+      || date instanceof Uint8Array
     ) {
       return Chrono.fromUnix(Number(date));
     }
@@ -260,13 +260,13 @@ export class ChronoSpan {
       Math.floor(this.minutes),
     );
     const seconds = ifNaNThen(
-      this.seconds %
-        (((days * 24 + hours) * 60 + minutes) * 60),
+      this.seconds
+        % (((days * 24 + hours) * 60 + minutes) * 60),
       Math.floor(this.seconds),
     );
     const milliseconds = ifNaNThen(
-      this.milliseconds %
-        ((((days * 24 + hours) * 60 + minutes) * 60 + seconds) * 1000),
+      this.milliseconds
+        % ((((days * 24 + hours) * 60 + minutes) * 60 + seconds) * 1000),
       Math.floor(this.milliseconds),
     );
 

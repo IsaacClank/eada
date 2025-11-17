@@ -1,4 +1,4 @@
-import { IEqual } from "../lib/common.ts";
+import { IEqual } from "@src/lib/common.ts";
 
 export type TransactionType = "Income" | "Expense" | "Utilization";
 

@@ -1,9 +1,10 @@
 import { DatabaseSync, SQLOutputValue } from "node:sqlite";
-import { IEqual } from "../../lib/common.ts";
-import { TransactionData } from "../../models/transaction.model.ts";
-import { Chrono } from "../../lib/chrono.ts";
-import { DbRecord, Repository } from "../common.ts";
-import { StringBuilder } from "../../lib/string.ts";
+
+import { DbRecord, Repository } from "@src/db/common.ts";
+import { Chrono } from "@src/lib/chrono.ts";
+import { IEqual } from "@src/lib/common.ts";
+import { StringBuilder } from "@src/lib/string.ts";
+import { TransactionData } from "@src/models/transaction.model.ts";
 
 export class TransactionRepo implements Repository {
   private static readonly Table = "transaction";
@@ -41,6 +42,17 @@ export class TransactionRepo implements Repository {
       },
     );
     return changedRecordCount;
+  }
+
+  getAll(): TransactionDbRecord[] {
+    const sqlBuilder = new StringBuilder()
+      .a("SELECT *").n()
+      .a(`FROM [${this.table}]`).n()
+      .a(";");
+    return this.conn
+      .prepare(sqlBuilder.get())
+      .all()
+      .map((record) => new TransactionDbRecord(record));
   }
 
   getByBudgetId(budgetId: string) {
@@ -113,5 +125,16 @@ export class TransactionDbRecord
       && this.category === other.category
       && this.amount === other.amount
       && this.note === other.note;
+  }
+
+  data(): TransactionData {
+    return {
+      id: this.id,
+      budgetId: this.budgetId,
+      timestamp: this.timestamp,
+      category: this.category,
+      amount: this.amount,
+      note: this.note,
+    };
   }
 }

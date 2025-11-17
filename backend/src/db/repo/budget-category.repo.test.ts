@@ -1,7 +1,13 @@
 import { afterEach, beforeEach, describe, it } from "@std/testing/bdd";
 import { applyDbMigrations } from "../migration.ts";
 import { Chrono } from "../../lib/chrono.ts";
-import { assert, assertEquals, assertIsError, assertThrows } from "@std/assert";
+import {
+  assert,
+  assertArrayIncludes,
+  assertEquals,
+  assertIsError,
+  assertThrows,
+} from "@std/assert";
 import { BudgetRepo } from "./budget.repo.ts";
 import { BudgetCategoryRepo } from "./budget-category.repo.ts";
 import { BudgetData } from "../../models/budget.model.ts";
@@ -164,6 +170,42 @@ describe("TransactionCategory", () => {
       budgetCategoryRepo.upsertMany(...expectedCategories);
       budgetCategoryRepo.deleteByBudgetId(budget.id);
       assertEquals(budgetCategoryRepo.getByBudgetId(budget.id).length, 0);
+    });
+  });
+
+  describe("getAll", () => {
+    it("should return all records", () => {
+      const expectedCategories: BudgetCategoryData[] = [
+        {
+          id: crypto.randomUUID(),
+          budgetId: budget.id,
+          name: "Salary",
+          type: "Income",
+          rate: 1,
+        },
+        {
+          id: crypto.randomUUID(),
+          budgetId: budget.id,
+          name: "Essential",
+          type: "Expense",
+          rate: 0.5,
+        },
+        {
+          id: crypto.randomUUID(),
+          budgetId: budget.id,
+          name: "Investment",
+          type: "Utilization",
+          rate: 0.5,
+        },
+      ];
+      budgetCategoryRepo.upsertMany(...expectedCategories);
+
+      const actual = budgetCategoryRepo.getAll();
+      assertEquals(actual.length, expectedCategories.length);
+      assertArrayIncludes(
+        actual.map((e) => e.id),
+        expectedCategories.map((e) => e.id),
+      );
     });
   });
 });

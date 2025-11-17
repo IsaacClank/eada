@@ -1,4 +1,4 @@
-import { assert, assertEquals } from "@std/assert";
+import { assert, assertArrayIncludes, assertEquals } from "@std/assert";
 import { afterEach, beforeEach, describe, it } from "@std/testing/bdd";
 import { Chrono } from "../../lib/chrono.ts";
 import { BudgetData } from "../../models/budget.model.ts";
@@ -70,6 +70,25 @@ describe("Transaction", () => {
       const actual = transactionRepo.getByBudgetId(budget.id);
       assertEquals(1, actual.length);
       assert(actual[0].equal(expected[0]));
+    });
+  });
+
+  describe("getAll()", () => {
+    it("should return all records", () => {
+      const expected: TransactionData[] = [
+        {
+          id: crypto.randomUUID(),
+          budgetId: budget.id,
+          timestamp: Chrono.from("2025-01-02"),
+          amount: 125000,
+          category: "Essential",
+          note: "",
+        },
+      ];
+      transactionRepo.insertMany(...expected);
+      const actual = transactionRepo.getAll();
+      assertEquals(actual.length, expected.length);
+      assertArrayIncludes(actual.map((e) => e.id), expected.map((e) => e.id));
     });
   });
 });

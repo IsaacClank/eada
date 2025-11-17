@@ -1,11 +1,13 @@
+import { assert, assertEquals, assertExists } from "@std/assert";
 import { afterEach, beforeEach, describe, it } from "@std/testing/bdd";
-import { applyDbMigrations } from "../migration.ts";
-import { Config } from "../../config.ts";
+
+import { Config } from "@src/config.ts";
+import { Chrono } from "@src/lib/chrono.ts";
+import { BudgetData } from "@src/models/budget.model.ts";
+import { applyDbMigrations } from "@src/db/migration.ts";
+import { getDbConnection } from "@src/db/connection.ts";
+
 import { BudgetRepo } from "./budget.repo.ts";
-import { getDbConnection } from "../connection.ts";
-import { BudgetData } from "../../models/budget.model.ts";
-import { Chrono } from "../../lib/chrono.ts";
-import { assert, assertExists } from "@std/assert";
 
 describe("budget.repo", () => {
   let budgetRepo!: BudgetRepo;
@@ -106,6 +108,25 @@ describe("budget.repo", () => {
         const actual = budgetRepo.getActiveAsOf(Chrono.from("2025-01-15"));
         assert(actual == null);
       });
+    });
+  });
+
+  describe("getAll()", () => {
+    it("should return all budget records", () => {
+      const expected: BudgetData = {
+        id: crypto.randomUUID(),
+        periodStart: Chrono.from("2025-01-01"),
+        periodEnd: Chrono.from("2025-02-01"),
+        expectedIncome: 100,
+        expectedExpense: 60,
+        expectedUtilization: 30,
+        expectedSurplus: 10,
+      };
+      budgetRepo.upsert(expected);
+
+      const actual = budgetRepo.getAll();
+      assertEquals(actual.length, 1);
+      assertEquals(actual[0].id, expected.id);
     });
   });
 });

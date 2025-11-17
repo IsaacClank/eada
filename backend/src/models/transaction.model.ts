@@ -1,5 +1,5 @@
-import { Chrono } from "../lib/chrono.ts";
-import { IEqual } from "../lib/common.ts";
+import { Chrono } from "@src/lib/chrono.ts";
+import { IEqual } from "@src/lib/common.ts";
 
 export interface TransactionData {
   id: string;
