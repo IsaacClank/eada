@@ -32,6 +32,7 @@
     "jsr:@std/testing@^1.0.15": "1.0.15",
     "npm:@types/node@*": "22.15.15",
     "npm:path-to-regexp@^6.3.0": "6.3.0",
+    "npm:zod-openapi@^5.4.5": "5.4.5_zod@4.1.9",
     "npm:zod@^4.1.9": "4.1.9"
   },
   "jsr": {
@@ -161,6 +162,12 @@
     "undici-types@6.21.0": {
       "integrity": "sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ=="
     },
+    "zod-openapi@5.4.5_zod@4.1.9": {
+      "integrity": "sha512-DVLBNsnggh8k/Yq7qp+NeQCH6JuLIyGzUQWA1wN5+7DpQJSwC7WYR/2lE6uQDmGcS/X6l4tUyYFpeG4nk3nOpA==",
+      "dependencies": [
+        "zod"
+      ]
+    },
     "zod@4.1.9": {
       "integrity": "sha512-HI32jTq0AUAC125z30E8bQNz0RQ+9Uc+4J7V97gLYjZVKRjeydPgGt6dvQzFrav7MYOUGFqqOGiHpA/fdbd0cQ=="
     }
@@ -173,6 +180,7 @@
       "jsr:@std/csv@^1.0.6",
       "jsr:@std/http@1",
       "jsr:@std/testing@^1.0.15",
+      "npm:zod-openapi@^5.4.5",
       "npm:zod@^4.1.9"
     ]
   }

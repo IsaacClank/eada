@@ -2,17 +2,37 @@
   "$schema": "https://raw.githubusercontent.com/denoland/deno/refs/tags/v2.5.0/cli/schemas/config-file.v1.json",
   "permissions": {
     "default": {
-      "net": ["0.0.0.0:3760"],
-      "env": ["HOME", "PORT", "DB_PATH"],
-      "read": ["./migrations/", "./output/"],
-      "write": ["./output/"]
+      "net": [
+        "0.0.0.0:3760"
+      ],
+      "env": [
+        "HOME",
+        "PORT",
+        "DB_PATH"
+      ],
+      "read": [
+        "./migrations/",
+        "./output/"
+      ],
+      "write": [
+        "./output/"
+      ]
     }
   },
   "test": {
     "permissions": {
-      "env": ["HOME", "PORT", "DB_PATH"],
-      "read": ["./migrations/", "./output/"],
-      "write": ["./output/"]
+      "env": [
+        "HOME",
+        "PORT",
+        "DB_PATH"
+      ],
+      "read": [
+        "./migrations/",
+        "./output/"
+      ],
+      "write": [
+        "./output/"
+      ]
     }
   },
   "tasks": {
@@ -29,7 +49,8 @@
     },
     "dev": "deno run -P --env-file --watch src/main.ts",
     "test": "deno test -P --env-file=.env.test --coverage",
-    "test:watch": "deno test -P --env-file=.env.test --watch"
+    "test:watch": "deno test -P --env-file=.env.test --watch",
+    "generate-open-api-spec": "deno run src/openapi.ts"
   },
   "imports": {
     "@oak/common": "jsr:@oak/commons@^1.0.1",
@@ -44,7 +65,8 @@
     "@std/csv": "jsr:@std/csv@^1.0.6",
     "@std/http": "jsr:@std/http@1",
     "@std/testing": "jsr:@std/testing@^1.0.15",
-    "zod": "npm:zod@^4.1.9"
+    "zod": "npm:zod@^4.1.9",
+    "zod-openapi": "npm:zod-openapi@^5.4.5"
   },
   "fmt": {
     "operatorPosition": "nextLine"
