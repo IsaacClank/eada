@@ -1,11 +1,11 @@
 import { Application } from "@oak/oak/application";
-import { Logger } from "./lib/logger.ts";
 import { isHttpError } from "@oak/common/http_errors";
 import { Status } from "@oak/common/status";
 import { $ZodError, $ZodIssueBase } from "zod/v4/core";
 
-import * as commonApi from "./api/common.api.ts";
-import * as budgetApi from "./api/budget.api.ts";
+import { Logger } from "@src/lib/logger.ts";
+import * as commonApi from "@src/api/common.api.ts";
+import * as budgetApi from "@src/api/budget.api.ts";
 
 export const server = new Application();
 
